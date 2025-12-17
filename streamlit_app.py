@@ -11,6 +11,15 @@ import json
 import os
 from azure.storage.blob import BlobServiceClient
 import tempfile
+import logging
+from datetime import datetime
+
+# Configure logging for monitoring
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Page config
 st.set_page_config(
@@ -18,6 +27,9 @@ st.set_page_config(
     page_icon="📱",
     layout="wide"
 )
+
+# Log app start
+logger.info("Streamlit app started")
 
 # Title
 st.title("📱 Social Media Engagement Predictor")
@@ -33,15 +45,19 @@ def load_model_from_azure():
     while still using models stored in Azure
     """
     try:
+        logger.info("Starting model load from Azure Blob Storage")
+
         # Get Azure connection string from Streamlit secrets or environment
         connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING",
                                           os.environ.get("AZURE_STORAGE_CONNECTION_STRING"))
 
         if not connection_string:
             # Fallback to local files if no Azure connection
+            logger.warning("No Azure connection found. Falling back to local files")
             st.warning("⚠️ No Azure connection found. Loading from local files...")
             return load_model_local()
 
+        logger.info("Azure connection string found")
         st.info("🔄 Loading model from Azure Blob Storage...")
 
         # Connect to Azure Blob Storage
@@ -67,6 +83,7 @@ def load_model_from_azure():
                 f.write(blob_client.download_blob().readall())
 
         # Load models from temporary directory
+        logger.info("Loading model files from temporary directory")
         model = joblib.load(os.path.join(temp_dir, 'engagement_model.pkl'))
         feature_columns = joblib.load(os.path.join(temp_dir, 'feature_columns.pkl'))
         label_encoders = joblib.load(os.path.join(temp_dir, 'label_encoders.pkl'))
@@ -78,11 +95,13 @@ def load_model_from_azure():
             with open(exp_path, 'r') as f:
                 experiment_results = json.load(f)
 
+        logger.info("✅ Model successfully loaded from Azure Blob Storage")
         st.success("✅ Model loaded from Azure Blob Storage!")
 
         return model, feature_columns, label_encoders, experiment_results
 
     except Exception as e:
+        logger.error(f"Error loading from Azure: {e}", exc_info=True)
         st.error(f"❌ Error loading from Azure: {e}")
         st.warning("Trying local files as fallback...")
         return load_model_local()
@@ -219,7 +238,13 @@ if st.button("🚀 Predict Engagement Rate", type="primary", use_container_width
         
         # Make prediction
         prediction = model.predict(df_input[feature_columns])[0]
-        
+
+        # Increment prediction counter
+        st.session_state.prediction_count += 1
+
+        # Log prediction
+        logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {st.session_state.prediction_count}")
+
         # Display result
         st.success("✅ Prediction Complete!")
         
@@ -238,9 +263,10 @@ if st.button("🚀 Predict Engagement Rate", type="primary", use_container_width
                 st.info("📊 Moderate engagement expected")
             else:
                 st.warning("📉 Low engagement expected")
-        
+
     except Exception as e:
         st.error(f"❌ Prediction error: {e}")
+        logger.error(f"Prediction error: {e}", exc_info=True)
 
 # Footer
 st.markdown("---")
@@ -251,4 +277,23 @@ st.markdown("""
 - **User engagement growth** is a strong predictor
 - **Buzz change rate** indicates trending topics
 """)
+
+# Monitoring & Analytics Section
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📊 Monitoring & Analytics")
+
+# Session metrics
+if 'prediction_count' not in st.session_state:
+    st.session_state.prediction_count = 0
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = datetime.now()
+
+# Display metrics
+uptime = datetime.now() - st.session_state.start_time
+st.sidebar.metric("Predictions Made", st.session_state.prediction_count)
+st.sidebar.metric("Session Uptime", f"{uptime.seconds // 60} min")
+st.sidebar.metric("Model Status", "✅ Active")
+
+# Log session info
+logger.info(f"Session metrics - Predictions: {st.session_state.prediction_count}, Uptime: {uptime}")
 
