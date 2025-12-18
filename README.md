@@ -23,10 +23,15 @@ This project implements an **end-to-end machine learning solution** that:
 - ✅ Tracks experiments using MLflow
 - ✅ Deploys models to Azure Blob Storage
 - ✅ Provides a user-friendly Streamlit interface
-- ✅ Implements real-time monitoring and analytics
+- ✅ **NEW: Azure Monitoring (100% FREE!)**
+  - 📊 Application Insights for performance tracking
+  - 📊 Log Analytics for centralized logging
+  - 📡 Storage Queue for real-time streaming
 - ✅ Integrates with SQLite database
 
 **Objective**: Predict social media post engagement BEFORE posting to optimize content strategy.
+
+**💰 Cost**: $0.00 - All Azure resources use FREE tier!
 
 ---
 
@@ -62,10 +67,17 @@ cd CL
 pip install -r requirements.txt
 ```
 
-3. **Run the Streamlit app locally:**
+3. **Test Azure setup (optional):**
+```bash
+py test_azure_setup.py
+```
+
+4. **Run the Streamlit app locally:**
 ```bash
 streamlit run streamlit_app.py
 ```
+
+**📖 See [QUICK_START.md](QUICK_START.md) for detailed instructions**
 
 ---
 
@@ -76,6 +88,9 @@ CL/
 ├── streamlit_app.py                      # Main Streamlit application
 ├── predict_engagement.py                 # Prediction logic and model loading
 ├── azure_config.py                       # Azure Blob Storage configuration
+├── azure_config.json                     # 🆕 Azure credentials & config
+├── azure_monitoring.py                   # 🆕 Azure monitoring class
+├── test_azure_setup.py                   # 🆕 Test Azure resources
 ├── requirements.txt                      # Python dependencies
 ├── Social Media Engagement Dataset.csv   # Original dataset
 ├── Social_Media_ML_Notebook.ipynb       # Jupyter notebook for analysis
@@ -91,8 +106,12 @@ CL/
 │   └── social_media.db                  # SQLite database
 ├── mlflow_tracking/
 │   └── track_experiments.py             # MLflow experiment tracking
-└── monitoring/
-    └── dashboard.py                     # Monitoring dashboard
+├── monitoring/
+│   └── dashboard.py                     # Monitoring dashboard
+└── docs/
+    ├── AZURE_SETUP_COMPLETE.md          # 🆕 Complete Azure setup guide
+    ├── QUICK_START.md                   # 🆕 Quick start guide
+    └── CHANGES_SUMMARY.md               # 🆕 What was changed
 ```
 
 ---
@@ -121,12 +140,14 @@ CL/
 - Secure connection string management
 - Automated model loading from cloud
 
-### 🔹 Monitoring & Analytics
-- Real-time prediction tracking
+### 🔹 Monitoring & Analytics (🆕 100% FREE!)
+- **Application Insights** - Performance tracking & telemetry
+- **Log Analytics** - Centralized logging & queries
+- **Storage Queue** - Real-time prediction streaming
 - Session uptime monitoring
 - Model status indicators
 - Prediction counter
-- Performance metrics display
+- Queue statistics display
 
 ### 🔹 User Interface
 - Interactive Streamlit web app
@@ -148,8 +169,9 @@ CL/
 | 5 | Database Integration | ✅ | SQLite database |
 | 6 | Web Interface | ✅ | Streamlit app |
 | 7 | Experiment Tracking | ✅ | MLflow + experiment_results.json |
-| 8 | Monitoring | ✅ | Real-time analytics dashboard |
+| 8 | Monitoring | ✅ | **Azure Monitoring (App Insights + Log Analytics + Queue)** |
 | 9 | Security | ✅ | Azure secure connections |
+| 10 | Real-time Streaming | ✅ | **Storage Queue (FREE!)** |
 
 ---
 
@@ -207,11 +229,22 @@ AZURE_STORAGE_CONNECTION_STRING = "your-connection-string"
 | `streamlit_app.py` | Main application with UI and prediction logic |
 | `predict_engagement.py` | Model loading and prediction functions |
 | `azure_config.py` | Azure Blob Storage configuration |
+| `azure_config.json` | 🆕 Azure credentials & resource names |
+| `azure_monitoring.py` | 🆕 Azure monitoring integration |
+| `test_azure_setup.py` | 🆕 Test Azure resources |
 | `requirements.txt` | All Python dependencies |
 | `models/engagement_model.pkl` | Trained ML model |
 | `models/experiment_results.json` | Model comparison results |
 | `database/social_media.db` | SQLite database |
 | `mlflow_tracking/track_experiments.py` | Experiment tracking |
+
+### 📚 Documentation
+
+| File | Purpose |
+|------|---------|
+| `AZURE_SETUP_COMPLETE.md` | Complete Azure setup guide |
+| `QUICK_START.md` | Quick start guide (3 steps) |
+| `CHANGES_SUMMARY.md` | What was changed for monitoring |
 
 ---
 
@@ -221,9 +254,14 @@ AZURE_STORAGE_CONNECTION_STRING = "your-connection-string"
 
 - ✅ App deployed to Streamlit Cloud
 - ✅ Models stored in Azure Blob Storage
-- ✅ Monitoring and analytics active
+- ✅ **Azure Monitoring active (100% FREE!)**
+  - ✅ Application Insights
+  - ✅ Log Analytics
+  - ✅ Storage Queue
 - ✅ All requirements implemented
 - ✅ Ready for demonstration
+
+**💰 Total Cost: $0.00 - All FREE resources!**
 
 ---
 

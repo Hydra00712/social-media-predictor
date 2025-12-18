@@ -5,13 +5,30 @@
   "resource_group": "rg-social-media-ml",
   "location": "francecentral",
   "storage_account": "stsocialmediajkvqol",
+  "storage_connection_string": "YOUR_STORAGE_CONNECTION_STRING_HERE",
   "containers": {
     "models": "models",
     "data": "data",
     "logs": "logs",
     "experiments": "experiments"
   },
+  "streaming": {
+    "queue_name": "predictions-queue",
+    "enabled": true,
+    "type": "storage_queue"
+  },
+  "monitoring": {
+    "application_insights": {
+      "name": "mlwsocialnsightsf7431d22",
+      "instrumentation_key": "07a147a2-326a-4751-b3ce-e59bdc2318b3"
+    },
+    "log_analytics": {
+      "name": "mlwsocialogalytjea9b61fd",
+      "workspace_id": "9da1901d-7676-40e8-a9b0-e13f71169b7d"
+    }
+  },
   "created_at": "2025-12-17",
+  "updated_at": "2025-12-18",
   "ml_workspace": {
     "workspace_name": "mlw-social-media",
     "compute_instance": "ci-social-media",

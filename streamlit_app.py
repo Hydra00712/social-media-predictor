@@ -15,17 +15,6 @@ import logging
 from datetime import datetime
 import sqlite3
 
-# Import security and streaming modules
-try:
-    from security.key_vault_manager import get_key_vault_manager
-    from security.access_control import get_rbac_manager, UserRole, Permission
-    from streaming.event_hub_client import get_event_hub_streamer
-    from streaming.realtime_processor import get_realtime_processor
-    SECURITY_ENABLED = True
-except ImportError:
-    SECURITY_ENABLED = False
-    logger.warning("Security and streaming modules not available")
-
 # Configure logging for monitoring
 logging.basicConfig(
     level=logging.INFO,
@@ -33,18 +22,39 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Initialize security and streaming (if available)
+# Import Azure monitoring
+try:
+    from azure_monitoring import AzureMonitoring
+    azure_monitoring = AzureMonitoring()
+    MONITORING_ENABLED = True
+    logger.info("✅ Azure Monitoring initialized")
+except ImportError as e:
+    MONITORING_ENABLED = False
+    azure_monitoring = None
+    logger.warning(f"Azure Monitoring not available: {e}")
+
+# Import security and streaming modules (optional)
+try:
+    from security.key_vault_manager import get_key_vault_manager
+    from security.access_control import get_rbac_manager, UserRole, Permission
+    SECURITY_ENABLED = True
+except ImportError:
+    SECURITY_ENABLED = False
+    logger.warning("Security modules not available (optional)")
+
+# Initialize security (if available)
 if SECURITY_ENABLED:
-    key_vault = get_key_vault_manager()
-    rbac = get_rbac_manager()
-    event_hub = get_event_hub_streamer()
-    realtime_processor = get_realtime_processor()
-    logger.info("✅ Security and streaming modules initialized")
+    try:
+        key_vault = get_key_vault_manager()
+        rbac = get_rbac_manager()
+        logger.info("✅ Security modules initialized")
+    except:
+        key_vault = None
+        rbac = None
+        SECURITY_ENABLED = False
 else:
     key_vault = None
     rbac = None
-    event_hub = None
-    realtime_processor = None
 
 # Database helper functions
 def get_db_connection():
@@ -244,6 +254,25 @@ with st.sidebar:
         st.info("Model loaded successfully")
     
     st.markdown("---")
+    st.markdown("### 📊 Azure Monitoring")
+
+    if MONITORING_ENABLED and azure_monitoring:
+        try:
+            stats = azure_monitoring.get_queue_stats()
+            if stats:
+                st.success("✅ Monitoring Active")
+                st.metric("Messages in Queue", stats['message_count'])
+                st.text(f"📡 Queue: {stats['queue_name']}")
+                st.text(f"📊 App Insights: Active")
+                st.text(f"📊 Log Analytics: Active")
+            else:
+                st.warning("⚠️ Queue stats unavailable")
+        except Exception as e:
+            st.error(f"❌ Monitoring error: {e}")
+    else:
+        st.info("ℹ️ Monitoring not configured")
+
+    st.markdown("---")
     st.markdown("### 💡 About")
     st.markdown("""
     This app uses **AI/ML** to predict social media engagement rates.
@@ -251,9 +280,10 @@ with st.sidebar:
     **Features:**
     - 🤖 HistGradientBoosting Algorithm
     - ☁️ Azure Blob Storage
-    - 📊 MLflow Experiment Tracking
+    - 📊 Application Insights (FREE)
+    - 📊 Log Analytics (FREE)
+    - 📡 Storage Queue Streaming (FREE)
     - 🗄️ SQLite Database
-    - 📈 Real-time Monitoring
     """)
 
     st.markdown("---")
@@ -362,27 +392,30 @@ if predict_button:
         # Save prediction to database (persists across refreshes)
         save_prediction_to_db(prediction, input_data)
 
-        # Stream prediction to Event Hub (real-time streaming)
-        if realtime_processor:
+        # Log to Azure Monitoring (Application Insights + Log Analytics + Storage Queue)
+        if MONITORING_ENABLED and azure_monitoring:
             try:
-                realtime_processor.process_prediction(
+                azure_monitoring.log_prediction(
                     input_data=input_data,
-                    prediction=prediction,
-                    model_info={"name": "engagement_model", "type": "HistGradientBoosting"}
+                    prediction=float(prediction),
+                    confidence=None
                 )
-                logger.info("📡 Prediction streamed to Event Hub")
+                logger.info("📊 Prediction logged to Azure Monitoring")
             except Exception as e:
-                logger.warning(f"Could not stream to Event Hub: {e}")
+                logger.warning(f"Could not log to Azure Monitoring: {e}")
 
-        # Log access for security audit
-        if rbac:
-            rbac.access_logger.log_access(
-                user_id="streamlit_user",
-                action="predict",
-                resource="engagement_model",
-                status="success",
-                details={"prediction": float(prediction)}
-            )
+        # Log access for security audit (optional)
+        if SECURITY_ENABLED and rbac:
+            try:
+                rbac.access_logger.log_access(
+                    user_id="streamlit_user",
+                    action="predict",
+                    resource="engagement_model",
+                    status="success",
+                    details={"prediction": float(prediction)}
+                )
+            except Exception as e:
+                logger.warning(f"Could not log access: {e}")
 
         # Log prediction
         total_predictions = get_total_predictions()

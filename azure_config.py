@@ -5,34 +5,52 @@ This file stores Azure resource names and settings
 
 # Azure Resource Configuration
 AZURE_CONFIG = {
-    # Resource Group
+    # Subscription & Resource Group
+    'subscription_id': '10ceef72-c9cd-4fb6-844b-ee8661d294fc',
+    'subscription_name': 'Azure for Students',
+    'tenant_id': '78ddbe5d-b682-466c-bad0-6ffbaf7ceb2d',
     'resource_group': 'rg-social-media-ml',
-    'location': 'eastus',  # Change if needed: westeurope, westus2, etc.
-    
+    'location': 'francecentral',
+
     # Azure ML Workspace
     'workspace_name': 'mlw-social-media',
-    
+
     # Storage Account
-    'storage_account': 'stsocialmediaml',  # Must be globally unique, lowercase, no hyphens
-    
-    # Container Registry (for Docker images)
-    'container_registry': 'acrsocialmediaml',  # Must be globally unique, lowercase, no hyphens
-    
-    # App Insights (for monitoring)
-    'app_insights': 'appi-social-media-ml',
-    
+    'storage_account': 'stsocialmediajkvqol',
+    'storage_connection_string': os.getenv('AZURE_STORAGE_CONNECTION_STRING', 'YOUR_STORAGE_CONNECTION_STRING_HERE'),
+
+    # Streaming (FREE - Storage Queue)
+    'streaming': {
+        'queue_name': 'predictions-queue',
+        'enabled': True,
+        'type': 'storage_queue'
+    },
+
+    # Event Hub
+    'event_hub': {
+        'namespace': 'evhnssocialml669',
+        'name': 'predictions-hub',
+        'connection_string': os.getenv('AZURE_EVENTHUB_CONNECTION_STRING', 'YOUR_EVENTHUB_CONNECTION_STRING_HERE')
+    },
+
+    # Monitoring (FREE)
+    'monitoring': {
+        'application_insights': {
+            'name': 'mlwsocialnsightsf7431d22',
+            'instrumentation_key': '07a147a2-326a-4751-b3ce-e59bdc2318b3'
+        },
+        'log_analytics': {
+            'name': 'mlwsocialogalytjea9b61fd',
+            'workspace_id': '9da1901d-7676-40e8-a9b0-e13f71169b7d'
+        }
+    },
+
     # Key Vault (for secrets)
-    'key_vault': 'kv-social-media-ml',  # Must be globally unique
-    
-    # Cosmos DB (database)
-    'cosmos_account': 'cosmos-social-media-ml',  # Must be globally unique
-    'cosmos_database': 'social_media_db',
-    
-    # App Service (for API)
-    'app_service_plan': 'asp-social-media-ml',
-    'web_app_api': 'app-social-media-api',  # Must be globally unique
-    'web_app_ui': 'app-social-media-ui',  # Must be globally unique
-    
+    'key_vault': {
+        'name': 'kv-social-ml-7487',
+        'vault_url': 'https://kv-social-ml-7487.vault.azure.net/'
+    },
+
     # Blob Storage Containers
     'blob_containers': [
         'models',
@@ -40,7 +58,7 @@ AZURE_CONFIG = {
         'logs',
         'experiments'
     ],
-    
+
     # Tags
     'tags': {
         'Project': 'SocialMediaML',
@@ -50,7 +68,7 @@ AZURE_CONFIG = {
 }
 
 # Subscription ID (will be set after login)
-SUBSCRIPTION_ID = None
+SUBSCRIPTION_ID = '10ceef72-c9cd-4fb6-844b-ee8661d294fc'
 
 def get_unique_name(base_name, suffix=''):
     """Generate a unique name for Azure resources"""
