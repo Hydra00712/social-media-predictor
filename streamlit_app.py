@@ -15,12 +15,36 @@ import logging
 from datetime import datetime
 import sqlite3
 
+# Import security and streaming modules
+try:
+    from security.key_vault_manager import get_key_vault_manager
+    from security.access_control import get_rbac_manager, UserRole, Permission
+    from streaming.event_hub_client import get_event_hub_streamer
+    from streaming.realtime_processor import get_realtime_processor
+    SECURITY_ENABLED = True
+except ImportError:
+    SECURITY_ENABLED = False
+    logger.warning("Security and streaming modules not available")
+
 # Configure logging for monitoring
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Initialize security and streaming (if available)
+if SECURITY_ENABLED:
+    key_vault = get_key_vault_manager()
+    rbac = get_rbac_manager()
+    event_hub = get_event_hub_streamer()
+    realtime_processor = get_realtime_processor()
+    logger.info("✅ Security and streaming modules initialized")
+else:
+    key_vault = None
+    rbac = None
+    event_hub = None
+    realtime_processor = None
 
 # Database helper functions
 def get_db_connection():
@@ -105,9 +129,17 @@ def load_model_from_azure():
     try:
         logger.info("Starting model load from Azure Blob Storage")
 
-        # Get Azure connection string from Streamlit secrets or environment
-        connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING",
-                                          os.environ.get("AZURE_STORAGE_CONNECTION_STRING"))
+        # Get Azure connection string from Key Vault (if available) or Streamlit secrets
+        connection_string = None
+        if key_vault:
+            connection_string = key_vault.get_storage_connection_string()
+            if connection_string:
+                logger.info("✅ Connection string retrieved from Azure Key Vault")
+
+        # Fallback to Streamlit secrets or environment
+        if not connection_string:
+            connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING",
+                                              os.environ.get("AZURE_STORAGE_CONNECTION_STRING"))
 
         if not connection_string:
             # Fallback to local files if no Azure connection
@@ -330,6 +362,28 @@ if predict_button:
         # Save prediction to database (persists across refreshes)
         save_prediction_to_db(prediction, input_data)
 
+        # Stream prediction to Event Hub (real-time streaming)
+        if realtime_processor:
+            try:
+                realtime_processor.process_prediction(
+                    input_data=input_data,
+                    prediction=prediction,
+                    model_info={"name": "engagement_model", "type": "HistGradientBoosting"}
+                )
+                logger.info("📡 Prediction streamed to Event Hub")
+            except Exception as e:
+                logger.warning(f"Could not stream to Event Hub: {e}")
+
+        # Log access for security audit
+        if rbac:
+            rbac.access_logger.log_access(
+                user_id="streamlit_user",
+                action="predict",
+                resource="engagement_model",
+                status="success",
+                details={"prediction": float(prediction)}
+            )
+
         # Log prediction
         total_predictions = get_total_predictions()
         logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
@@ -400,6 +454,26 @@ with col2:
     st.metric("⏱️ Uptime", f"{uptime_minutes} min", help="Current session uptime")
 
 st.sidebar.metric("🤖 Model Status", "✅ Active", help="Model is loaded and ready")
+
+# Security and Streaming Status
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔐 Security & Streaming")
+
+if SECURITY_ENABLED:
+    if key_vault and key_vault.client:
+        st.sidebar.success("🔐 Key Vault: Connected")
+    else:
+        st.sidebar.info("🔐 Key Vault: Fallback mode")
+
+    if event_hub and event_hub.enabled:
+        st.sidebar.success("📡 Event Hub: Streaming")
+    else:
+        st.sidebar.info("📡 Event Hub: Disabled")
+
+    if rbac:
+        st.sidebar.success("🛡️ RBAC: Enabled")
+else:
+    st.sidebar.warning("⚠️ Security modules not loaded")
 
 # Add a progress indicator
 if total_predictions > 0:
