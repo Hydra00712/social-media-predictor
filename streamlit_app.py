@@ -13,6 +13,7 @@ from azure.storage.blob import BlobServiceClient
 import tempfile
 import logging
 from datetime import datetime
+import sqlite3
 
 # Configure logging for monitoring
 logging.basicConfig(
@@ -20,6 +21,58 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Database helper functions
+def get_db_connection():
+    """Get database connection"""
+    db_path = 'database/social_media.db'
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    return conn
+
+def get_total_predictions():
+    """Get total number of predictions from database"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM predictions")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+    except Exception as e:
+        logger.warning(f"Could not get prediction count from database: {e}")
+        return 0
+
+def save_prediction_to_db(prediction_value, input_data):
+    """Save prediction to database"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Create table if it doesn't exist
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS predictions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                predicted_engagement REAL NOT NULL,
+                model_version TEXT,
+                prediction_time TEXT DEFAULT CURRENT_TIMESTAMP,
+                processing_time_ms REAL
+            )
+        ''')
+
+        # Insert prediction
+        cursor.execute('''
+            INSERT INTO predictions (predicted_engagement, model_version, processing_time_ms)
+            VALUES (?, ?, ?)
+        ''', (float(prediction_value), 'HistGradientBoostingRegressor', 0))
+
+        conn.commit()
+        conn.close()
+        logger.info(f"Prediction saved to database: {prediction_value:.4f}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save prediction to database: {e}")
+        return False
 
 # Page config
 st.set_page_config(
@@ -239,11 +292,12 @@ if st.button("🚀 Predict Engagement Rate", type="primary", use_container_width
         # Make prediction
         prediction = model.predict(df_input[feature_columns])[0]
 
-        # Increment prediction counter
-        st.session_state.prediction_count += 1
+        # Save prediction to database (persists across refreshes)
+        save_prediction_to_db(prediction, input_data)
 
         # Log prediction
-        logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {st.session_state.prediction_count}")
+        total_predictions = get_total_predictions()
+        logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
 
         # Display result
         st.success("✅ Prediction Complete!")
@@ -282,18 +336,19 @@ st.markdown("""
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📊 Monitoring & Analytics")
 
-# Session metrics
-if 'prediction_count' not in st.session_state:
-    st.session_state.prediction_count = 0
+# Session metrics - Load from database
 if 'start_time' not in st.session_state:
     st.session_state.start_time = datetime.now()
 
+# Get total predictions from database (persists across refreshes)
+total_predictions = get_total_predictions()
+
 # Display metrics
 uptime = datetime.now() - st.session_state.start_time
-st.sidebar.metric("Predictions Made", st.session_state.prediction_count)
+st.sidebar.metric("Predictions Made", total_predictions)
 st.sidebar.metric("Session Uptime", f"{uptime.seconds // 60} min")
 st.sidebar.metric("Model Status", "✅ Active")
 
 # Log session info
-logger.info(f"Session metrics - Predictions: {st.session_state.prediction_count}, Uptime: {uptime}")
+logger.info(f"Session metrics - Total Predictions: {total_predictions}, Uptime: {uptime}")
 
