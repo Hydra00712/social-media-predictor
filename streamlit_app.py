@@ -94,9 +94,9 @@ st.info("👋 **Welcome!** This AI-powered tool predicts how well your social me
 
 st.markdown("---")
 
-# Load model and encoders from Azure Blob Storage
+# Load model and encoders from Azure Blob Storage (DISABLED TO SAVE COSTS)
 @st.cache_resource
-def load_model_from_azure():
+def load_model_from_azure_DISABLED():
     """
     Load model from Azure Blob Storage
     This allows the Streamlit app to run anywhere (local or cloud)
@@ -181,14 +181,16 @@ def load_model_local():
             with open('models/experiment_results.json', 'r') as f:
                 experiment_results = json.load(f)
 
-        st.info("📁 Model loaded from local files")
+        st.success("✅ Model loaded from local files (Azure disabled to save costs)")
 
         return model, feature_columns, label_encoders, experiment_results
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None, None, None, None
 
-model, feature_columns, label_encoders, experiment_results = load_model_from_azure()
+# COST SAVING: Use local files instead of Azure to avoid charges
+# model, feature_columns, label_encoders, experiment_results = load_model_from_azure()
+model, feature_columns, label_encoders, experiment_results = load_model_local()
 
 if model is None:
     st.error("❌ Could not load model. Please ensure model files are in the 'models' folder.")
