@@ -84,9 +84,14 @@ st.set_page_config(
 # Log app start
 logger.info("Streamlit app started")
 
-# Title
+# Title with better styling
 st.title("📱 Social Media Engagement Predictor")
-st.markdown("### Predict engagement rate for your social media posts")
+st.markdown("### 🎯 Predict engagement rate for your social media posts using AI")
+st.markdown("*Powered by Azure ML, MLflow, and HistGradientBoosting Algorithm*")
+
+# Add a nice info banner
+st.info("👋 **Welcome!** This AI-powered tool predicts how well your social media posts will perform before you publish them. Fill in the details below to get started!")
+
 st.markdown("---")
 
 # Load model and encoders from Azure Blob Storage
@@ -111,11 +116,12 @@ def load_model_from_azure():
             return load_model_local()
 
         logger.info("Azure connection string found")
-        st.info("🔄 Loading model from Azure Blob Storage...")
 
-        # Connect to Azure Blob Storage
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-        container_client = blob_service_client.get_container_client("models")
+        # Show loading message with spinner
+        with st.spinner("🔄 Loading AI model from Azure Blob Storage..."):
+            # Connect to Azure Blob Storage
+            blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+            container_client = blob_service_client.get_container_client("models")
 
         # Create temporary directory
         temp_dir = tempfile.mkdtemp()
@@ -148,15 +154,15 @@ def load_model_from_azure():
             with open(exp_path, 'r') as f:
                 experiment_results = json.load(f)
 
-        logger.info("✅ Model successfully loaded from Azure Blob Storage")
-        st.success("✅ Model loaded from Azure Blob Storage!")
+            logger.info("✅ Model successfully loaded from Azure Blob Storage")
+            st.success("✅ Model loaded from Azure Blob Storage!")
 
-        return model, feature_columns, label_encoders, experiment_results
+            return model, feature_columns, label_encoders, experiment_results
 
     except Exception as e:
         logger.error(f"Error loading from Azure: {e}", exc_info=True)
         st.error(f"❌ Error loading from Azure: {e}")
-        st.warning("Trying local files as fallback...")
+        st.warning("⚠️ Trying local files as fallback...")
         return load_model_local()
 
 @st.cache_resource
@@ -206,11 +212,35 @@ with st.sidebar:
         st.info("Model loaded successfully")
     
     st.markdown("---")
-    st.markdown("### About")
-    st.markdown("This app predicts social media engagement rate using machine learning.")
+    st.markdown("### 💡 About")
+    st.markdown("""
+    This app uses **AI/ML** to predict social media engagement rates.
+
+    **Features:**
+    - 🤖 HistGradientBoosting Algorithm
+    - ☁️ Azure Blob Storage
+    - 📊 MLflow Experiment Tracking
+    - 🗄️ SQLite Database
+    - 📈 Real-time Monitoring
+    """)
+
+    st.markdown("---")
+    st.markdown("### 🔗 Links")
+    st.markdown("[GitHub Repository](https://github.com/hydra00712)")
+    st.markdown("[Azure Portal](https://portal.azure.com)")
 
 # Main content - Input Form
 st.header("📝 Enter Post Details")
+
+# Add helpful instructions
+with st.expander("ℹ️ How to use this app", expanded=False):
+    st.markdown("""
+    **Step 1:** Fill in all the post details below
+    **Step 2:** Click the "🎯 Predict Engagement" button
+    **Step 3:** View your predicted engagement rate
+
+    **Note:** All predictions are saved to the database and persist across page refreshes!
+    """)
 
 col1, col2, col3 = st.columns(3)
 
@@ -255,8 +285,13 @@ with col5:
 
 st.markdown("---")
 
-# Predict button
-if st.button("🚀 Predict Engagement Rate", type="primary", use_container_width=True):
+# Predict button with better styling
+st.markdown("<br>", unsafe_allow_html=True)
+col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+with col_btn2:
+    predict_button = st.button("🎯 Predict Engagement Rate", type="primary", use_container_width=True)
+
+if predict_button:
     try:
         # Create input dataframe
         input_data = {
@@ -299,24 +334,35 @@ if st.button("🚀 Predict Engagement Rate", type="primary", use_container_width
         total_predictions = get_total_predictions()
         logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
 
-        # Display result
-        st.success("✅ Prediction Complete!")
-        
+        # Display result with better styling
+        st.markdown("---")
+        st.success("✅ **Prediction Complete!**")
+
+        # Create a nice result card
         col_a, col_b, col_c = st.columns([1, 2, 1])
         with col_b:
+            # Main prediction metric
             st.metric(
-                label="Predicted Engagement Rate",
+                label="🎯 Predicted Engagement Rate",
                 value=f"{prediction:.2%}",
-                delta=None
+                delta=None,
+                help="Predicted percentage of users who will engage with this post"
             )
-            
-            # Interpretation
+
+            # Interpretation with emojis
+            st.markdown("---")
             if prediction > 0.5:
-                st.success("🔥 High engagement expected!")
+                st.success("🔥 **High Engagement Expected!**")
+                st.markdown("This post is likely to perform very well!")
             elif prediction > 0.3:
-                st.info("📊 Moderate engagement expected")
+                st.info("📊 **Moderate Engagement Expected**")
+                st.markdown("This post should get decent engagement.")
             else:
-                st.warning("📉 Low engagement expected")
+                st.warning("📉 **Low Engagement Expected**")
+                st.markdown("Consider optimizing your content for better results.")
+
+            # Show prediction saved confirmation
+            st.caption(f"✅ Prediction #{total_predictions} saved to database")
 
     except Exception as e:
         st.error(f"❌ Prediction error: {e}")
@@ -343,12 +389,30 @@ if 'start_time' not in st.session_state:
 # Get total predictions from database (persists across refreshes)
 total_predictions = get_total_predictions()
 
-# Display metrics
+# Display metrics with better styling
 uptime = datetime.now() - st.session_state.start_time
-st.sidebar.metric("Predictions Made", total_predictions)
-st.sidebar.metric("Session Uptime", f"{uptime.seconds // 60} min")
-st.sidebar.metric("Model Status", "✅ Active")
+uptime_minutes = uptime.seconds // 60
+
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    st.metric("🎯 Predictions", total_predictions, help="Total predictions made (persists across refreshes)")
+with col2:
+    st.metric("⏱️ Uptime", f"{uptime_minutes} min", help="Current session uptime")
+
+st.sidebar.metric("🤖 Model Status", "✅ Active", help="Model is loaded and ready")
+
+# Add a progress indicator
+if total_predictions > 0:
+    st.sidebar.progress(min(total_predictions / 100, 1.0))
+    st.sidebar.caption(f"Progress: {min(total_predictions, 100)}/100 predictions")
 
 # Log session info
 logger.info(f"Session metrics - Total Predictions: {total_predictions}, Uptime: {uptime}")
+
+# Footer in sidebar
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🎓 Academic Project")
+st.sidebar.caption("Cloud Computing Course")
+st.sidebar.caption("Machine Learning Pipeline")
+st.sidebar.caption("© 2025")
 

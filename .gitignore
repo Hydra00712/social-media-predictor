@@ -75,3 +75,10 @@ models/*.joblib
 # Logs
 *.log
 
+# Temporary files
+*.tmp
+*.temp
+*_COMPLETE.md
+*_STATUS.md
+*_SUMMARY.md
+

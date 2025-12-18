@@ -1,0 +1,22 @@
+{
+  "subscription_id": "10ceef72-c9cd-4fb6-844b-ee8661d294fc",
+  "subscription_name": "Azure for Students",
+  "tenant_id": "78ddbe5d-b682-466c-bad0-6ffbaf7ceb2d",
+  "resource_group": "rg-social-media-ml",
+  "location": "francecentral",
+  "storage_account": "stsocialmediajkvqol",
+  "containers": {
+    "models": "models",
+    "data": "data",
+    "logs": "logs",
+    "experiments": "experiments"
+  },
+  "created_at": "2025-12-17",
+  "ml_workspace": {
+    "workspace_name": "mlw-social-media",
+    "compute_instance": "ci-social-media",
+    "compute_cluster": "cpu-cluster",
+    "workspace_id": "/subscriptions/10ceef72-c9cd-4fb6-844b-ee8661d294fc/resourceGroups/rg-social-media-ml/providers/Microsoft.MachineLearningServices/workspaces/mlw-social-media",
+    "location": "francecentral"
+  }
+}
