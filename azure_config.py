@@ -4,6 +4,10 @@ This file stores Azure resource names and settings
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Azure Resource Configuration
 AZURE_CONFIG = {
