@@ -3,6 +3,8 @@ Azure Configuration
 This file stores Azure resource names and settings
 """
 
+import os
+
 # Azure Resource Configuration
 AZURE_CONFIG = {
     # Subscription & Resource Group
