@@ -33,6 +33,15 @@ except ImportError as e:
     azure_monitoring = None
     logger.warning(f"Azure Monitoring not available: {e}")
 
+# Import model explainability
+try:
+    from model_explainability import ModelExplainer, PredictionExplainer
+    EXPLAINABILITY_ENABLED = True
+    logger.info("✅ Model Explainability initialized")
+except ImportError as e:
+    EXPLAINABILITY_ENABLED = False
+    logger.warning(f"Model Explainability not available: {e}")
+
 # Import security and streaming modules (optional)
 try:
     from security.key_vault_manager import get_key_vault_manager
@@ -450,6 +459,49 @@ if predict_button:
 
             # Show prediction saved confirmation
             st.caption(f"✅ Prediction #{total_predictions} saved to database")
+
+        # MODEL EXPLAINABILITY SECTION
+        st.markdown("---")
+        st.markdown("### 🔍 **Why This Prediction?** (Model Explainability)")
+        
+        if EXPLAINABILITY_ENABLED:
+            try:
+                pred_explainer = PredictionExplainer()
+                
+                # Get explanation
+                explanation = pred_explainer.explain_engagement_prediction(prediction, input_data)
+                
+                # Display engagement level
+                st.markdown(f"**Engagement Level:** {explanation['engagement_level']}")
+                
+                # Display interpretation
+                st.info(explanation['interpretation'])
+                
+                # Display key factors
+                with st.expander("📊 Key Factors Influencing This Prediction", expanded=True):
+                    for i, factor in enumerate(explanation['key_factors'], 1):
+                        col1, col2, col3 = st.columns([2, 1, 1])
+                        with col1:
+                            st.markdown(f"**{i}. {factor['factor']}**")
+                            st.caption(factor['description'])
+                        with col2:
+                            st.badge(factor['impact'], anchor="center")
+                
+                # Display recommendations
+                with st.expander("💡 Recommendations to Improve Engagement", expanded=False):
+                    for i, rec in enumerate(explanation['recommendations'], 1):
+                        st.markdown(f"- {rec}")
+                
+                # Feature importance (if available)
+                if experiment_results and 'feature_importance' in experiment_results:
+                    with st.expander("📈 Feature Importance (What Matters Most)", expanded=False):
+                        st.bar_chart(data=experiment_results['feature_importance'])
+                
+            except Exception as e:
+                st.warning(f"⚠️ Explainability details not available: {e}")
+                logger.warning(f"Explainability error: {e}")
+        else:
+            st.info("ℹ️ Model explainability features not enabled")
 
     except Exception as e:
         st.error(f"❌ Prediction error: {e}")
