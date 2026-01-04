@@ -42,28 +42,16 @@ except ImportError as e:
     EXPLAINABILITY_ENABLED = False
     logger.warning(f"Model Explainability not available: {e}")
 
-# Import security and streaming modules (optional)
+# Import Key Vault for Lab7 Security Requirements (Criterion #13)
 try:
-    from security.key_vault_manager import get_key_vault_manager
-    from security.access_control import get_rbac_manager, UserRole, Permission
-    SECURITY_ENABLED = True
-except ImportError:
+    from key_vault_setup import KeyVaultManager
+    key_vault = KeyVaultManager()
+    SECURITY_ENABLED = True if key_vault.client else False
+    logger.info("✅ Azure Key Vault integration ready")
+except Exception as e:
     SECURITY_ENABLED = False
-    logger.warning("Security modules not available (optional)")
-
-# Initialize security (if available)
-if SECURITY_ENABLED:
-    try:
-        key_vault = get_key_vault_manager()
-        rbac = get_rbac_manager()
-        logger.info("✅ Security modules initialized")
-    except:
-        key_vault = None
-        rbac = None
-        SECURITY_ENABLED = False
-else:
     key_vault = None
-    rbac = None
+    logger.info("ℹ️  Key Vault not available - using environment variables")
 
 # Database helper functions
 def get_db_connection():
@@ -148,17 +136,27 @@ def load_model_from_azure():
     try:
         logger.info("Starting model load from Azure Blob Storage")
 
-        # Get Azure connection string from Key Vault (if available) or Streamlit secrets
+        # Get Azure connection string securely (Lab7 Security Criterion #13)
+        # Priority: Key Vault → Streamlit Secrets → Environment Variables
         connection_string = None
-        if key_vault:
+        
+        # Try Key Vault first (most secure - production)
+        if key_vault and key_vault.client:
             connection_string = key_vault.get_storage_connection_string()
             if connection_string:
-                logger.info("✅ Connection string retrieved from Azure Key Vault")
+                logger.info("🔐 Connection string retrieved from Azure Key Vault (secure)")
 
-        # Fallback to Streamlit secrets or environment
+        # Fallback to Streamlit secrets (cloud deployment)
         if not connection_string:
-            connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING",
-                                              os.environ.get("AZURE_STORAGE_CONNECTION_STRING"))
+            connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING")
+            if connection_string:
+                logger.info("☁️ Connection string from Streamlit Secrets")
+        
+        # Fallback to environment variables (development only)
+        if not connection_string:
+            connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+            if connection_string:
+                logger.info("⚠️ Connection string from environment variable (.env)")
 
         if not connection_string:
             # Fallback to local files if no Azure connection
@@ -548,17 +546,9 @@ if SECURITY_ENABLED:
     if key_vault and key_vault.client:
         st.sidebar.success("🔐 Key Vault: Connected")
     else:
-        st.sidebar.info("🔐 Key Vault: Fallback mode")
-
-    if event_hub and event_hub.enabled:
-        st.sidebar.success("📡 Event Hub: Streaming")
-    else:
-        st.sidebar.info("📡 Event Hub: Disabled")
-
-    if rbac:
-        st.sidebar.success("🛡️ RBAC: Enabled")
+        st.sidebar.info("🔐 Key Vault: Fallback mode (using .env)")
 else:
-    st.sidebar.warning("⚠️ Security modules not loaded")
+    st.sidebar.info("🔐 Security: Using environment variables")
 
 # Add a progress indicator
 if total_predictions > 0:
