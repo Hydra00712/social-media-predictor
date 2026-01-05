@@ -411,19 +411,6 @@ if predict_button:
             except Exception as e:
                 logger.warning(f"Could not log to Azure Monitoring: {e}")
 
-        # Log access for security audit (optional)
-        if SECURITY_ENABLED and rbac:
-            try:
-                rbac.access_logger.log_access(
-                    user_id="streamlit_user",
-                    action="predict",
-                    resource="engagement_model",
-                    status="success",
-                    details={"prediction": float(prediction)}
-                )
-            except Exception as e:
-                logger.warning(f"Could not log access: {e}")
-
         # Log prediction
         total_predictions = get_total_predictions()
         logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")

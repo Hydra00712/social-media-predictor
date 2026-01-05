@@ -1,0 +1,106 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # enable OIDC for azure/login
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-social-media-ml
+  AZURE_LOCATION: francecentral
+  CONTAINERAPPS_ENVIRONMENT: social-ml-env
+  CONTAINER_APP_NAME: social-ml-app
+  IMAGE_NAME: social-ml
+  KEYVAULT_NAME: kv-social-ml-7487
+  ACR_NAME: ${{ vars.ACR_NAME }}  # set repo variable ACR_NAME to your registry name (lowercase, global unique)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Enable dynamic az extensions
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+
+      - name: Ensure ACR exists (Basic SKU)
+        run: |
+          if [ -z "${{ env.ACR_NAME }}" ]; then
+            echo "Set repository variable ACR_NAME to your Azure Container Registry name" && exit 1
+          fi
+          az acr show -n ${{ env.ACR_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1 || \
+          az acr create -n ${{ env.ACR_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} -l ${{ env.AZURE_LOCATION }} --sku Basic
+
+      - name: Build and push image to ACR
+        env:
+          IMAGE_TAG: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          az acr login -n ${{ env.ACR_NAME }}
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Resolve secrets from Key Vault
+        run: |
+          STORAGE_CONN=$(az keyvault secret show --vault-name ${{ env.KEYVAULT_NAME }} --name AZURE-STORAGE-CONNECTION-STRING --query value -o tsv)
+          APPINSIGHTS_CONN=$(az keyvault secret show --vault-name ${{ env.KEYVAULT_NAME }} --name APPLICATIONINSIGHTS_CONNECTION_STRING --query value -o tsv 2>/dev/null || echo "")
+          if [ -z "$STORAGE_CONN" ]; then echo "Missing Key Vault secret AZURE-STORAGE-CONNECTION-STRING"; exit 1; fi
+          echo "STORAGE_CONN=$STORAGE_CONN" >> $GITHUB_ENV
+          echo "APPINSIGHTS_CONN=$APPINSIGHTS_CONN" >> $GITHUB_ENV
+
+      - name: Ensure Container Apps environment
+        run: |
+          az containerapp env show -n ${{ env.CONTAINERAPPS_ENVIRONMENT }} -g ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1 || \
+          az containerapp env create -n ${{ env.CONTAINERAPPS_ENVIRONMENT }} -g ${{ env.AZURE_RESOURCE_GROUP }} -l ${{ env.AZURE_LOCATION }}
+
+      - name: Create or update Container App
+        env:
+          IMAGE_TAG: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        run: |
+          set -e
+          ACR_LOGIN_SERVER=${{ env.ACR_NAME }}.azurecr.io
+          if az containerapp show -n ${{ env.CONTAINER_APP_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} >/dev/null 2>&1; then
+            az containerapp update \
+              -n ${{ env.CONTAINER_APP_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} \
+              --image $IMAGE_TAG \
+              --set-secrets storage-conn="$STORAGE_CONN" appinsights-conn="$APPINSIGHTS_CONN" \
+              --env-vars AZURE_STORAGE_CONNECTION_STRING=secretref:storage-conn APPLICATIONINSIGHTS_CONNECTION_STRING=secretref:appinsights-conn \
+              --ingress external --target-port 8501 \
+              --min-replicas 0 --max-replicas 1 \
+              --registry-server $ACR_LOGIN_SERVER \
+              --registry-identity system \
+              --revision-suffix ${{ github.sha }}
+          else
+            az containerapp create \
+              -n ${{ env.CONTAINER_APP_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} \
+              --environment ${{ env.CONTAINERAPPS_ENVIRONMENT }} \
+              --image $IMAGE_TAG \
+              --target-port 8501 --ingress external \
+              --min-replicas 0 --max-replicas 1 \
+              --cpu 0.25 --memory 0.5Gi \
+              --set-secrets storage-conn="$STORAGE_CONN" appinsights-conn="$APPINSIGHTS_CONN" \
+              --env-vars AZURE_STORAGE_CONNECTION_STRING=secretref:storage-conn APPLICATIONINSIGHTS_CONNECTION_STRING=secretref:appinsights-conn \
+              --registry-server $ACR_LOGIN_SERVER \
+              --registry-identity system \
+              --assign-identity system \
+              --revision-suffix ${{ github.sha }}
+          fi
+
+      - name: Grant ACR pull to Container App identity
+        run: |
+          ACR_ID=$(az acr show -n ${{ env.ACR_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} --query id -o tsv)
+          PRINCIPAL_ID=$(az containerapp show -n ${{ env.CONTAINER_APP_NAME }} -g ${{ env.AZURE_RESOURCE_GROUP }} --query identity.principalId -o tsv)
+          az role assignment create --assignee $PRINCIPAL_ID --role AcrPull --scope $ACR_ID --only-show-errors || true

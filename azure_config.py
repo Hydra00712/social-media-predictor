@@ -43,7 +43,7 @@ AZURE_CONFIG = {
     'monitoring': {
         'application_insights': {
             'name': 'mlwsocialnsightsf7431d22',
-            'instrumentation_key': '07a147a2-326a-4751-b3ce-e59bdc2318b3'
+            'instrumentation_key': os.getenv('APPINSIGHTS_INSTRUMENTATION_KEY', '07a147a2-326a-4751-b3ce-e59bdc2318b3')
         },
         'log_analytics': {
             'name': 'mlwsocialogalytjea9b61fd',

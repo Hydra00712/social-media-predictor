@@ -71,29 +71,44 @@ class AzureMonitoring:
             # Send to Application Insights (if available)
             if self.telemetry_client:
                 try:
+                    # Track as REQUEST (shows up in Overview dashboard)
+                    import time
+                    start_time = time.time()
+                    
                     # Track custom event
                     self.telemetry_client.track_event('PredictionMade', {
-                        'prediction': prediction,
-                        'confidence': confidence,
+                        'prediction': str(prediction),
+                        'confidence': str(confidence) if confidence else 'null',
                         'timestamp': timestamp,
-                        'platform': input_data.get('platform', 'unknown'),
-                        'topic_category': input_data.get('topic_category', 'unknown')
+                        'platform': str(input_data.get('platform', 'unknown')),
+                        'topic_category': str(input_data.get('topic_category', 'unknown'))
+                    }, {
+                        'prediction_value': float(prediction),
+                        'processing_time': (time.time() - start_time) * 1000
                     })
 
-                    # Track custom metric
-                    self.telemetry_client.track_metric('engagement_prediction', prediction)
-
-                    # Track trace for detailed logging
-                    self.telemetry_client.track_trace(
-                        f'Prediction made: {prediction:.4f}',
+                    # Track custom metric (shows in Metrics explorer)
+                    self.telemetry_client.track_metric('engagement_prediction', float(prediction))
+                    
+                    # Track as request (shows in server requests graph)
+                    self.telemetry_client.track_request(
+                        name='ML_Prediction',
+                        url='http://localhost:8502/predict',
+                        success=True,
+                        duration=(time.time() - start_time) * 1000,
+                        response_code='200',
                         properties={
-                            'input_data': str(input_data),
-                            'confidence': confidence
+                            'platform': str(input_data.get('platform', 'unknown')),
+                            'prediction': str(prediction)
                         }
                     )
 
-                    # Flush to ensure data is sent
+                    # Flush IMMEDIATELY to ensure data is sent
                     self.telemetry_client.flush()
+                    
+                    # Wait a tiny bit for flush to complete
+                    time.sleep(0.1)
+                    
                     logger.info(f"✅ Prediction logged to Application Insights: {prediction}")
                 except Exception as e:
                     logger.warning(f"Could not log to Application Insights: {e}")
