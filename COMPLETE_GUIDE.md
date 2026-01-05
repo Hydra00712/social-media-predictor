@@ -55,6 +55,49 @@ Think of the project like a restaurant:
 
 ---
 
+## **Part 2B: Component Dependency Map**
+
+This shows which files need which files:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    streamlit_app.py                          │
+│               (THE MAIN ORCHESTRATOR)                        │
+│                                                              │
+│  ┌──────────────────┐  ┌────────────────────┐              │
+│  │ Loads from Azure │  │ Imports helpers    │              │
+│  │ Blob Storage     │  │ for processing     │              │
+│  └────────┬─────────┘  └────────┬───────────┘              │
+│           │                     │                           │
+│      ┌────▼──────────────────────▼─────┐                   │
+│      │  models/                        │                   │
+│      │  - engagement_model.pkl ◄────── THE MODEL           │
+│      │  - feature_columns.pkl ◄─────── Feature order       │
+│      │  - label_encoders.pkl ◄─────────Word→number maps    │
+│      │  - experiment_results.json ◄─── Model metrics       │
+│      └────┬──────────────────────────────┘                 │
+│           │                                                 │
+│      ┌────▼──────────────────────────────┐                 │
+│      │ Helper Modules Imported           │                 │
+│      │ - data_balancing.py               │                 │
+│      │ - model_explainability.py         │                 │
+│      │ - azure_monitoring.py             │                 │
+│      │ - azure_config.py                 │                 │
+│      │ - key_vault_setup.py              │                 │
+│      └────┬──────────────────────────────┘                 │
+│           │                                                 │
+│      ┌────▼──────────────────────────────┐                 │
+│      │ Sends Data To Azure Services      │                 │
+│      │ - App Insights (logs)             │                 │
+│      │ - Queue Storage (predictions)     │                 │
+│      │ - Log Analytics (via App Insights)│                 │
+│      └────────────────────────────────────┘                │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## **Part 3: Each Component's Role**
 
 ### **Component 1: Streamlit App** (`streamlit_app.py`)
@@ -165,6 +208,156 @@ Model thinks: "This looks like Post 1, so... HIGH engagement!"
 
 ---
 
+## **Part 3B: Component Interconnection Details**
+
+### **How streamlit_app.py Connects to Everything**
+
+When `streamlit_app.py` starts, it performs a chain of connections:
+
+```
+1. INITIALIZATION PHASE (When app starts)
+   ├─ Imports key_vault_setup.py
+   │  ├─ Attempts to connect to Azure Key Vault
+   │  ├─ If fails: Uses .env file as fallback
+   │  └─ Stores connection string for later use
+   │
+   ├─ Imports azure_monitoring.py
+   │  ├─ Connects to Application Insights
+   │  ├─ Connects to Queue Storage
+   │  └─ Initializes logging
+   │
+   ├─ Imports azure_config.py
+   │  ├─ Sets up Azure resource names
+   │  └─ Configures API endpoints
+   │
+   ├─ Imports data_balancing.py
+   │  └─ Loads SMOTE/ADASYN algorithms
+   │
+   ├─ Imports model_explainability.py
+   │  ├─ Loads SHAP library
+   │  └─ Loads LIME library
+   │
+   └─ Calls load_model_from_azure()
+      ├─ Gets connection string from Key Vault
+      ├─ Connects to Azure Blob Storage
+      ├─ Downloads 4 model files:
+      │  ├─ engagement_model.pkl
+      │  ├─ feature_columns.pkl
+      │  ├─ label_encoders.pkl
+      │  └─ experiment_results.json
+      └─ Caches in memory (don't re-download each prediction)
+
+2. READY STATE
+   └─ App waits for user input on localhost:8501
+
+3. USER SUBMITS FORM (Prediction Flow)
+   └─ [See "Part 5: Detailed Data Flow" below]
+```
+
+### **How Key Vault Connects to Blob Storage**
+
+```
+User or App needs model file
+         ↓
+streamlit_app.py calls: load_model_from_azure()
+         ↓
+Function gets connection string
+         ├─ Tries Key Vault first
+         │  └─ If fails: Uses .env file
+         ↓
+Uses connection string to connect to Blob Storage
+         ├─ Container: "models"
+         ├─ Downloads 4 files
+         └─ Caches in memory
+         ↓
+Function returns: (model, columns, encoders, results)
+         ↓
+streamlit_app.py can now make predictions
+```
+
+### **How Monitoring Connects to Predictions**
+
+```
+User submits prediction form
+         ↓
+streamlit_app.py makes prediction
+         ├─ Calls model.predict()
+         ├─ Gets result: engagement_score
+         └─ Calculates confidence
+         ↓
+azure_monitoring.py automatically logs:
+         ├─ Prediction timestamp
+         ├─ Input features (post data)
+         ├─ Prediction result
+         ├─ Confidence score
+         ├─ User location/IP (if available)
+         └─ Latency (how long prediction took)
+         ↓
+Sends to TWO places simultaneously:
+         ├─ Azure Application Insights (dashboard view)
+         └─ Azure Queue Storage (message queue)
+         ↓
+Later, Log Analytics queries this data
+         ├─ Counts predictions: "1,250 total"
+         ├─ Calculates average latency: "234ms"
+         ├─ Detects errors: "0 failed"
+         └─ Power BI uses for dashboard
+```
+
+### **How Data Balancing Connects to Model Training** (Historical)
+
+```
+During initial training (already done):
+
+Raw training data: 9,600 samples
+├─ 8,000 low engagement posts
+├─ 1,200 medium engagement posts
+└─ 400 high engagement posts
+    (IMBALANCED - model would ignore rare high engagement)
+         ↓
+data_balancing.py applied SMOTE/ADASYN:
+└─ Created synthetic high engagement posts
+         ↓
+Balanced dataset:
+├─ 3,200 low engagement
+├─ 3,200 medium engagement
+└─ 3,200 high engagement
+    (BALANCED - model learns all equally)
+         ↓
+HistGradientBoosting trained on balanced data
+         ↓
+Result saved as engagement_model.pkl
+```
+
+### **How Model Explainability Works with Predictions**
+
+```
+streamlit_app.py makes prediction for user input
+         ├─ Gets: engagement_score = 0.82
+         └─ Also needs: WHY is it 0.82?
+         ↓
+Calls model_explainability.py:
+         ├─ Uses SHAP to calculate:
+         │  ├─ Feature importance (which inputs mattered most)
+         │  └─ Feature impact (how much they moved the score)
+         │
+         └─ Uses LIME to create:
+            └─ Local explanation (why for THIS specific prediction)
+         ↓
+Returns explanation data:
+         ├─ Sentiment impact: +40%
+         ├─ Platform impact: +30%
+         ├─ Topic impact: +15%
+         └─ Other features: +15%
+         ↓
+streamlit_app.py displays in Streamlit:
+         ├─ Bar chart showing feature importance
+         ├─ Confidence meter
+         └─ Human-readable explanation
+```
+
+---
+
 ## **Part 4: Each Azure Service's Role**
 
 ### **1. Azure Blob Storage** 📦
@@ -251,7 +444,326 @@ Model thinks: "This looks like Post 1, so... HIGH engagement!"
 
 ---
 
-## **Part 5: Data Flow - Step by Step**
+## **Part 5: Detailed Data Flow - Complete Workflow**
+
+### **PHASE 1: APP STARTUP** (What happens when you run `streamlit run streamlit_app.py`)
+
+```
+User types: streamlit run streamlit_app.py
+                    ↓
+Python loads streamlit_app.py
+                    ↓
+Module 1: Import Key Vault Setup
+  ├─ key_vault_setup.py runs __init__
+  ├─ Tries to connect to Azure Key Vault (kv-social-ml-7487)
+  ├─ If success: SECURITY_ENABLED = True
+  └─ If fail: Falls back to .env file, SECURITY_ENABLED = True (with env var)
+                    ↓
+Module 2: Import Azure Monitoring
+  ├─ azure_monitoring.py runs __init__
+  ├─ Connects to Application Insights (mlwsocialnsightsf7431d22)
+  ├─ Connects to Queue Storage (predictions-queue)
+  └─ Initializes logging system
+                    ↓
+Module 3: Import Azure Config
+  ├─ Sets up resource group name
+  ├─ Sets up region (francecentral)
+  └─ Configures API endpoints
+                    ↓
+Call: load_model_from_azure()
+  ├─ Get connection string (from Key Vault or .env)
+  ├─ Connect to Blob Storage (stsocialmediajkvqol)
+  ├─ List files in 'models/' container:
+  │  ├─ engagement_model.pkl (375 KB - THE MODEL)
+  │  ├─ feature_columns.pkl (279 bytes - feature list)
+  │  ├─ label_encoders.pkl (4.9 KB - text→number maps)
+  │  └─ experiment_results.json (697 bytes - metrics)
+  ├─ Download all 4 files to temp directory
+  ├─ Load into Python memory (CACHE them)
+  ├─ Load experiment_results.json for display
+  └─ Return: (model, columns, encoders, results)
+                    ↓
+Streamlit Server Starts
+  ├─ Listen on http://localhost:8501
+  └─ Ready to accept user requests
+
+OUTPUT TO CONSOLE:
+✅ Application Insights SDK connected
+✅ Storage Queue connected
+✅ Azure Monitoring initialized
+✅ Azure Key Vault integration ready
+✅ Model successfully loaded from Azure Blob Storage
+✅ Streamlit app started
+Listening on http://localhost:8501
+```
+
+### **PHASE 2: USER OPENS THE APP**
+
+```
+User navigates to http://localhost:8501
+                    ↓
+Browser makes HTTP request to local server
+                    ↓
+Streamlit renders the page:
+  ├─ Display title: "🎯 Social Media Engagement Predictor"
+  ├─ Display sidebar with:
+  │  ├─ Model status: "HistGradientBoosting"
+  │  ├─ Data balance: "SMOTE/ADASYN enabled"
+  │  ├─ Key Vault status: "Connected" or "Fallback mode"
+  │  └─ App Insights status: "✅ Connected"
+  │
+  └─ Display main form with input fields:
+     ├─ Platform: Dropdown (Instagram/Twitter/Facebook)
+     ├─ Sentiment: Dropdown (Positive/Negative/Neutral)
+     ├─ Topic: Dropdown (Tech/News/Entertainment)
+     ├─ Emotion: Dropdown (Joy/Sadness/Anger)
+     ├─ Has Link: Checkbox
+     ├─ Campaign Name: Text input
+     ├─ Content Length: Number slider
+     └─ Predict button
+                    ↓
+App displays:
+  ├─ Best Model Metrics:
+  │  ├─ Best Model: HistGradientBoosting
+  │  ├─ R² Score: -0.041
+  │  ├─ MAE: 0.361
+  │  └─ RMSE: 1.147
+  │
+  └─ Feature Importance (from experiment_results.json)
+```
+
+### **PHASE 3: USER SUBMITS FORM**
+
+```
+User fills form:
+  ├─ Platform: "Instagram"
+  ├─ Sentiment: "Positive"
+  ├─ Topic: "Technology"
+  ├─ Emotion: "Joy"
+  ├─ Has Link: True
+  ├─ Campaign: "Product Launch"
+  ├─ Content Length: 150
+  └─ Clicks "🎯 Predict Engagement Rate"
+                    ↓
+streamlit_app.py receives form data as Python dictionary:
+  {
+    "platform": "Instagram",
+    "sentiment_label": "Positive",
+    "topic": "Technology",
+    "emotion_type": "Joy",
+    "has_link": True,
+    "campaign_name": "Product Launch",
+    "content_length": 150,
+    ... (+ 9 more features)
+  }
+```
+
+### **PHASE 4: ENCODE TEXT TO NUMBERS**
+
+```
+Python function: encode_user_input()
+                    ↓
+Takes raw text inputs, looks up in label_encoders:
+  
+  label_encoders (loaded from label_encoders.pkl):
+  {
+    "platform": {"Instagram": 2, "Twitter": 1, "Facebook": 3},
+    "sentiment_label": {"Positive": 1, "Negative": 0, "Neutral": 2},
+    "topic": {"Technology": 5, "News": 2, "Entertainment": 4},
+    "emotion_type": {"Joy": 3, "Sadness": 1, "Anger": 2},
+    ... (for all 16 features)
+  }
+                    ↓
+Converts:
+  "Instagram" → 2
+  "Positive" → 1
+  "Technology" → 5
+  "Joy" → 3
+  True → 1
+  "Product Launch" → (hash value)
+  150 → 150
+                    ↓
+Creates feature vector in EXACT order model expects:
+  feature_columns (from feature_columns.pkl):
+  ["platform", "sentiment_label", "topic", "emotion_type", 
+   "has_link", "campaign_name", "content_length", ...]
+                    ↓
+Final vector (ready for model):
+  [2, 1, 5, 3, 1, 0.45, 150, ...]  (16 numbers total)
+```
+
+### **PHASE 5: MAKE PREDICTION**
+
+```
+Input vector: [2, 1, 5, 3, 1, 0.45, 150, ...]
+                    ↓
+Python: prediction = model.predict([vector])
+                    ↓
+HistGradientBoosting model processes:
+  ├─ Builds decision trees in memory
+  ├─ Routes input through each tree
+  ├─ Aggregates results
+  └─ Outputs: 0.82 (engagement score 0-1 scale)
+                    ↓
+Convert to human-readable format:
+  0.82 * 100 = 82% engagement
+  Category: HIGH (if > 0.7)
+```
+
+### **PHASE 6: EXPLAIN PREDICTION**
+
+```
+Prediction result: 0.82
+                    ↓
+Call: model_explainability.py
+  ├─ calculate_shap_values(input_vector, model)
+  ├─ calculate_lime_explanation(input_vector, model)
+  └─ Returns importance scores for each feature
+                    ↓
+Results (example):
+  ├─ Sentiment (Positive): +0.35 impact (40%)
+  ├─ Platform (Instagram): +0.25 impact (30%)
+  ├─ Topic (Technology): +0.15 impact (18%)
+  ├─ Emotion (Joy): +0.08 impact (10%)
+  └─ Other features: +0.02 impact (2%)
+                    ↓
+streamlit_app.py formats for display:
+  ├─ Bar chart showing feature importance
+  ├─ Text: "Top 3 factors driving engagement:"
+  ├─ 1. Sentiment: 40%
+  ├─ 2. Platform: 30%
+  └─ 3. Topic: 18%
+```
+
+### **PHASE 7: LOG TO AZURE MONITORING**
+
+```
+Prediction made: engagement_score = 0.82
+                    ↓
+azure_monitoring.py automatically logs:
+  ├─ Record object:
+  │  ├─ timestamp: 2026-01-05T10:34:22.123Z
+  │  ├─ prediction_id: UUID
+  │  ├─ input_features: {platform: 2, sentiment: 1, ...}
+  │  ├─ predicted_engagement: 0.82
+  │  ├─ confidence_score: 0.92
+  │  ├─ model_version: engagement_model.pkl
+  │  ├─ processing_latency_ms: 234
+  │  └─ user_location: localhost
+  │
+  └─ Sends to TWO Azure services SIMULTANEOUSLY:
+     │
+     ├─ Azure Application Insights
+     │  ├─ Records as "PredictionMade" event
+     │  ├─ Indexes for real-time dashboard
+     │  ├─ Triggers any configured alerts
+     │  └─ Feeds to Log Analytics
+     │
+     └─ Azure Queue Storage (predictions-queue)
+        ├─ Adds message to queue
+        ├─ Message persists until processed
+        ├─ Can be read by Power BI or other tools
+        └─ Async processing (doesn't block prediction)
+                    ↓
+Status: Logged successfully ✅
+```
+
+### **PHASE 8: DISPLAY RESULTS TO USER**
+
+```
+All processing done, results ready
+                    ↓
+streamlit_app.py renders results section:
+  
+  ┌─────────────────────────────────┐
+  │  PREDICTION RESULT              │
+  │  ┌────────────────────────────┐ │
+  │  │ Engagement: 82/100         │ │
+  │  │ Category: HIGH             │ │
+  │  │ Confidence: 92%            │ │
+  │  └────────────────────────────┘ │
+  │                                  │
+  │  Top Factors:                    │
+  │  ├─ Sentiment: ████████ 40%     │
+  │  ├─ Platform: ██████ 30%        │
+  │  ├─ Topic: ███ 18%              │
+  │  └─ Other: █ 12%                │
+  │                                  │
+  │  Session Stats:                  │
+  │  ├─ Predictions made: 1,250     │
+  │  ├─ Avg latency: 234ms          │
+  │  └─ Success rate: 100%          │
+  │                                  │
+  │  System Status:                  │
+  │  ├─ 🟢 Key Vault: Connected     │
+  │  ├─ 🟢 App Insights: Connected  │
+  │  └─ 🟢 Azure Storage: Connected │
+  └─────────────────────────────────┘
+                    ↓
+Browser displays to user in ~500-1000ms total time
+```
+
+### **PHASE 9: BACKEND MONITORING CONTINUES**
+
+```
+Even after result displayed, monitoring continues:
+                    ↓
+Log Analytics processes queue messages periodically:
+  ├─ Reads prediction from queue
+  ├─ Extracts metrics
+  ├─ Updates statistics:
+  │  ├─ Total predictions: 1,251
+  │  ├─ Average latency: 233ms
+  │  ├─ Prediction distribution: ...
+  │  └─ Error rate: 0%
+  │
+  └─ Deletes message from queue (already processed)
+                    ↓
+Power BI refreshes dashboard (every 15 minutes):
+  ├─ Queries Log Analytics for latest data
+  ├─ Updates charts:
+  │  ├─ Predictions per hour
+  │  ├─ Engagement distribution
+  │  ├─ Most common platforms
+  │  ├─ Average confidence scores
+  │  └─ Error tracking
+  │
+  └─ Displays to stakeholders
+                    ↓
+Continuous monitoring active 24/7
+```
+
+### **PHASE 10: ERROR HANDLING & FALLBACKS**
+
+```
+What if Key Vault unavailable?
+  ├─ Error: 401 Unauthorized
+  └─ Fallback: Use .env file ✅ (connection works)
+                    ↓
+What if Blob Storage unreachable?
+  ├─ Error: Connection timeout
+  └─ Fallback: Use local models/ folder ✅ (models exist locally)
+                    ↓
+What if model fails to predict?
+  ├─ Error: Model error
+  ├─ Log error to App Insights
+  └─ Display to user: "Prediction failed, please try again"
+                    ↓
+What if monitoring unavailable?
+  ├─ Error: App Insights unreachable
+  ├─ Queue message stays in storage
+  └─ Prediction still works ✅ (monitoring is async)
+                    ↓
+What if Label Encoder missing a value?
+  ├─ User enters unknown platform: "TikTok"
+  ├─ Encoder doesn't have TikTok
+  ├─ Error handling: Map to closest known value
+  └─ Log warning: "Unknown category, using default"
+```
+
+---
+
+## **Part 5B: Data Flow - Step by Step**
 
 ### **User Makes a Prediction**
 
