@@ -1,0 +1,26 @@
+name: CI Basic Syntax
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Syntax check (no deps)
+        run: |
+          python -m compileall streamlit_app.py predict_engagement.py azure_monitoring.py table_storage_manager.py azure_config.py
+
+      - name: Complete
+        run: echo "Basic syntax check passed."
