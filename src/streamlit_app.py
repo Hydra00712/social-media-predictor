@@ -1,4 +1,4 @@
-"""
+﻿"""
 Simple Streamlit App for Social Media Engagement Prediction
 This satisfies the professor's requirement for user interface + Streamlit
 """
@@ -27,7 +27,7 @@ try:
     from azure_monitoring import AzureMonitoring
     azure_monitoring = AzureMonitoring()
     MONITORING_ENABLED = True
-    logger.info("✅ Azure Monitoring initialized")
+    logger.info("âœ… Azure Monitoring initialized")
 except ImportError as e:
     MONITORING_ENABLED = False
     azure_monitoring = None
@@ -37,7 +37,7 @@ except ImportError as e:
 try:
     from model_explainability import ModelExplainer, PredictionExplainer
     EXPLAINABILITY_ENABLED = True
-    logger.info("✅ Model Explainability initialized")
+    logger.info("âœ… Model Explainability initialized")
 except ImportError as e:
     EXPLAINABILITY_ENABLED = False
     logger.warning(f"Model Explainability not available: {e}")
@@ -47,11 +47,11 @@ try:
     from key_vault_setup import KeyVaultManager
     key_vault = KeyVaultManager()
     SECURITY_ENABLED = True if key_vault.client else False
-    logger.info("✅ Azure Key Vault integration ready")
+    logger.info("âœ… Azure Key Vault integration ready")
 except Exception as e:
     SECURITY_ENABLED = False
     key_vault = None
-    logger.info("ℹ️  Key Vault not available - using environment variables")
+    logger.info("â„¹ï¸  Key Vault not available - using environment variables")
 
 # Database helper functions
 def get_db_connection():
@@ -108,7 +108,7 @@ def save_prediction_to_db(prediction_value, input_data):
 # Page config
 st.set_page_config(
     page_title="Social Media Engagement Predictor",
-    page_icon="📱",
+    page_icon="ðŸ“±",
     layout="wide"
 )
 
@@ -116,12 +116,12 @@ st.set_page_config(
 logger.info("Streamlit app started")
 
 # Title with better styling
-st.title("📱 Social Media Engagement Predictor")
-st.markdown("### 🎯 Predict engagement rate for your social media posts using AI")
+st.title("ðŸ“± Social Media Engagement Predictor")
+st.markdown("### ðŸŽ¯ Predict engagement rate for your social media posts using AI")
 st.markdown("*Powered by Azure ML, MLflow, and HistGradientBoosting Algorithm*")
 
 # Add a nice info banner
-st.info("👋 **Welcome!** This AI-powered tool predicts how well your social media posts will perform before you publish them. Fill in the details below to get started!")
+st.info("ðŸ‘‹ **Welcome!** This AI-powered tool predicts how well your social media posts will perform before you publish them. Fill in the details below to get started!")
 
 st.markdown("---")
 
@@ -137,37 +137,37 @@ def load_model_from_azure():
         logger.info("Starting model load from Azure Blob Storage")
 
         # Get Azure connection string securely (Lab7 Security Criterion #13)
-        # Priority: Key Vault → Streamlit Secrets → Environment Variables
+        # Priority: Key Vault â†’ Streamlit Secrets â†’ Environment Variables
         connection_string = None
         
         # Try Key Vault first (most secure - production)
         if key_vault and key_vault.client:
             connection_string = key_vault.get_storage_connection_string()
             if connection_string:
-                logger.info("🔐 Connection string retrieved from Azure Key Vault (secure)")
+                logger.info("ðŸ” Connection string retrieved from Azure Key Vault (secure)")
 
         # Fallback to Streamlit secrets (cloud deployment)
         if not connection_string:
             connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING")
             if connection_string:
-                logger.info("☁️ Connection string from Streamlit Secrets")
+                logger.info("â˜ï¸ Connection string from Streamlit Secrets")
         
         # Fallback to environment variables (development only)
         if not connection_string:
             connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
             if connection_string:
-                logger.info("⚠️ Connection string from environment variable (.env)")
+                logger.info("âš ï¸ Connection string from environment variable (.env)")
 
         if not connection_string:
             # Fallback to local files if no Azure connection
             logger.warning("No Azure connection found. Falling back to local files")
-            st.warning("⚠️ No Azure connection found. Loading from local files...")
+            st.warning("âš ï¸ No Azure connection found. Loading from local files...")
             return load_model_local()
 
         logger.info("Azure connection string found")
 
         # Show loading message with spinner
-        with st.spinner("🔄 Loading AI model from Azure Blob Storage..."):
+        with st.spinner("ðŸ”„ Loading AI model from Azure Blob Storage..."):
             # Connect to Azure Blob Storage
             blob_service_client = BlobServiceClient.from_connection_string(connection_string)
             container_client = blob_service_client.get_container_client("models")
@@ -203,15 +203,15 @@ def load_model_from_azure():
             with open(exp_path, 'r') as f:
                 experiment_results = json.load(f)
 
-            logger.info("✅ Model successfully loaded from Azure Blob Storage")
-            st.success("✅ Model loaded from Azure Blob Storage!")
+            logger.info("âœ… Model successfully loaded from Azure Blob Storage")
+            st.success("âœ… Model loaded from Azure Blob Storage!")
 
             return model, feature_columns, label_encoders, experiment_results
 
     except Exception as e:
         logger.error(f"Error loading from Azure: {e}", exc_info=True)
-        st.error(f"❌ Error loading from Azure: {e}")
-        st.warning("⚠️ Trying local files as fallback...")
+        st.error(f"âŒ Error loading from Azure: {e}")
+        st.warning("âš ï¸ Trying local files as fallback...")
         return load_model_local()
 
 @st.cache_resource
@@ -230,7 +230,7 @@ def load_model_local():
             with open('models/experiment_results.json', 'r') as f:
                 experiment_results = json.load(f)
 
-        st.info("📁 Model loaded from local files")
+        st.info("ðŸ“ Model loaded from local files")
 
         return model, feature_columns, label_encoders, experiment_results
     except Exception as e:
@@ -240,61 +240,67 @@ def load_model_local():
 model, feature_columns, label_encoders, experiment_results = load_model_from_azure()
 
 if model is None:
-    st.error("❌ Could not load model. Please ensure model files are in the 'models' folder.")
+    st.error("âŒ Could not load model. Please ensure model files are in the 'models' folder.")
     st.stop()
 
 # Sidebar - Model Info
 with st.sidebar:
-    st.header("📊 Model Information")
+    st.header("ðŸ“Š Model Information")
     
     if experiment_results:
         st.metric("Best Model", experiment_results['best_model'])
-        st.metric("R² Score", f"{experiment_results['metrics'][experiment_results['best_model']]['r2']:.4f}")
+        st.metric("RÂ² Score", f"{experiment_results['metrics'][experiment_results['best_model']]['r2']:.4f}")
         st.metric("MAE", f"{experiment_results['metrics'][experiment_results['best_model']]['mae']:.4f}")
         st.metric("RMSE", f"{experiment_results['metrics'][experiment_results['best_model']]['rmse']:.4f}")
         
         st.markdown("---")
         st.markdown("### Models Compared")
         for model_name in experiment_results['models_compared']:
-            st.text(f"✓ {model_name}")
+            st.text(f"âœ“ {model_name}")
     else:
         st.info("Model loaded successfully")
     
     st.markdown("---")
-    st.markdown("### 📊 Azure Monitoring")
+    st.header("EXPLAINABILITY GUIDE")
+    st.subheader("Engagement Levels")
+    st.markdown("- HIGH: > 50%")
+    st.markdown("- MODERATE: 30-50%")
+    st.markdown("- LOW: < 30%")
+    st.markdown("---")
+    st.markdown("### ï¿½ðŸ“Š Azure Monitoring")
 
     if MONITORING_ENABLED and azure_monitoring:
         try:
             stats = azure_monitoring.get_queue_stats()
             if stats:
-                st.success("✅ Monitoring Active")
+                st.success("âœ… Monitoring Active")
                 st.metric("Messages in Queue", stats['message_count'])
-                st.text(f"📡 Queue: {stats['queue_name']}")
-                st.text(f"📊 App Insights: Active")
-                st.text(f"📊 Log Analytics: Active")
+                st.text(f"ðŸ“¡ Queue: {stats['queue_name']}")
+                st.text(f"ðŸ“Š App Insights: Active")
+                st.text(f"ðŸ“Š Log Analytics: Active")
             else:
-                st.warning("⚠️ Queue stats unavailable")
+                st.warning("âš ï¸ Queue stats unavailable")
         except Exception as e:
-            st.error(f"❌ Monitoring error: {e}")
+            st.error(f"âŒ Monitoring error: {e}")
     else:
-        st.info("ℹ️ Monitoring not configured")
+        st.info("â„¹ï¸ Monitoring not configured")
 
     st.markdown("---")
-    st.markdown("### 💡 About")
+    st.markdown("### ðŸ’¡ About")
     st.markdown("""
     This app uses **AI/ML** to predict social media engagement rates.
 
     **Features:**
-    - 🤖 HistGradientBoosting Algorithm
-    - ☁️ Azure Blob Storage
-    - 📊 Application Insights (FREE)
-    - 📊 Log Analytics (FREE)
-    - 📡 Storage Queue Streaming (FREE)
-    - 🗄️ SQLite Database
+    - ðŸ¤– HistGradientBoosting Algorithm
+    - â˜ï¸ Azure Blob Storage
+    - ðŸ“Š Application Insights (FREE)
+    - ðŸ“Š Log Analytics (FREE)
+    - ðŸ“¡ Storage Queue Streaming (FREE)
+    - ðŸ—„ï¸ SQLite Database
     """)
 
     st.markdown("---")
-    st.markdown("### 🔗 Links")
+    st.markdown("### ðŸ”— Links")
     st.markdown("[GitHub Repository](https://github.com/hydra00712)")
     st.markdown("[Azure Portal](https://portal.azure.com)")
 
@@ -304,13 +310,13 @@ left_col, right_col = st.columns([1, 2], gap="large")
 
 # RIGHT COLUMN - Input Form
 with right_col:
-    st.header("📝 Enter Post Details")
+    st.header("ðŸ“ Enter Post Details")
 
     # Add helpful instructions
-    with st.expander("ℹ️ How to use this app", expanded=False):
+    with st.expander("â„¹ï¸ How to use this app", expanded=False):
         st.markdown("""
         **Step 1:** Fill in all the post details below
-        **Step 2:** Click the "🎯 Predict Engagement" button
+        **Step 2:** Click the "ðŸŽ¯ Predict Engagement" button
         **Step 3:** View your predicted engagement rate & explainability on the left
 
         **Note:** All predictions are saved to the database and persist across page refreshes!
@@ -359,7 +365,8 @@ with right_col:
 
 # LEFT COLUMN - Explainability Panel
 with left_col:
-    st.header("🔍 Explainability")
+    st.header("ðŸ” AI Explainability Engine")
+    st.markdown("*Understand why your post will perform this way*")
     st.markdown("---")
     
     # Initialize placeholder for explainability results
@@ -367,29 +374,36 @@ with left_col:
     
     with explainability_container:
         # Show initial guide
-        st.info("👈 Fill the form on the right and click **Predict** to see AI explanations here!")
+        st.warning("ðŸ‘ˆ **Fill the form on the right and click PREDICT to see AI explanations here!**")
         
-        st.markdown("### How Model Decisions Work:")
+        st.markdown("### What You'll See After Prediction:")
         st.markdown("""
-        ✅ **SHAP Analysis** - Shows feature importance
+        âœ… **Engagement Score** - 0% to 100% prediction
         
-        ✅ **Key Factors** - What influences engagement
+        âœ… **Engagement Level** - High/Moderate/Low classification
         
-        ✅ **Engagement Level** - High/Medium/Low prediction
+        âœ… **Key Factors** - What influences this specific prediction
+        - Sentiment impact ðŸ˜Š
+        - Toxicity analysis ðŸ›¡ï¸
+        - Growth trends ðŸ“ˆ
+        - Topic buzz ðŸ”¥
+        - Platform analysis ðŸ“±
         
-        ✅ **Recommendations** - Tips to boost engagement
+        âœ… **Recommendations** - Actionable tips to improve
         
-        ✅ **Model Confidence** - How certain is the prediction
+        âœ… **Model Confidence** - How certain is the AI (%)
+        
+        âœ… **Advanced Analysis** - Deep SHAP/LIME explanations
         """)
         
         # Show feature correlations
         if experiment_results and 'metrics' in experiment_results:
             st.markdown("---")
-            st.markdown("### 📊 Model Performance")
+            st.markdown("### ðŸ“Š Model Performance")
             model_metrics = experiment_results['metrics'][experiment_results['best_model']]
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
-                st.metric("R² Score", f"{model_metrics['r2']:.4f}")
+                st.metric("RÂ² Score", f"{model_metrics['r2']:.4f}")
             with col_m2:
                 st.metric("MAE", f"{model_metrics['mae']:.4f}")
             with col_m3:
@@ -401,7 +415,7 @@ st.markdown("---")
 st.markdown("<br>", unsafe_allow_html=True)
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    predict_button = st.button("🎯 Predict Engagement Rate", type="primary", use_container_width=True)
+    predict_button = st.button("ðŸŽ¯ Predict Engagement Rate", type="primary", use_container_width=True)
 
 if predict_button:
     try:
@@ -450,7 +464,7 @@ if predict_button:
                     prediction=float(prediction),
                     confidence=None
                 )
-                logger.info("📊 Prediction logged to Azure Monitoring")
+                logger.info("ðŸ“Š Prediction logged to Azure Monitoring")
             except Exception as e:
                 logger.warning(f"Could not log to Azure Monitoring: {e}")
 
@@ -460,14 +474,14 @@ if predict_button:
 
         # Display result in right column with better styling
         st.markdown("---")
-        st.success("✅ **Prediction Complete!**")
+        st.success("âœ… **Prediction Complete!**")
 
         # Create a nice result card
         col_a, col_b, col_c = st.columns([1, 2, 1])
         with col_b:
             # Main prediction metric
             st.metric(
-                label="🎯 Predicted Engagement Rate",
+                label="ðŸŽ¯ Predicted Engagement Rate",
                 value=f"{prediction:.2%}",
                 delta=None,
                 help="Predicted percentage of users who will engage with this post"
@@ -476,17 +490,17 @@ if predict_button:
             # Interpretation with emojis
             st.markdown("---")
             if prediction > 0.5:
-                st.success("🔥 **High Engagement Expected!**")
+                st.success("ðŸ”¥ **High Engagement Expected!**")
                 st.markdown("This post is likely to perform very well!")
             elif prediction > 0.3:
-                st.info("📊 **Moderate Engagement Expected**")
+                st.info("ðŸ“Š **Moderate Engagement Expected**")
                 st.markdown("This post should get decent engagement.")
             else:
-                st.warning("📉 **Low Engagement Expected**")
+                st.warning("ðŸ“‰ **Low Engagement Expected**")
                 st.markdown("Consider optimizing your content for better results.")
 
             # Show prediction saved confirmation
-            st.caption(f"✅ Prediction #{total_predictions} saved to database")
+            st.caption(f"âœ… Prediction #{total_predictions} saved to database")
 
         # ========================================
         # UPDATE LEFT COLUMN WITH EXPLAINABILITY
@@ -495,49 +509,54 @@ if predict_button:
             st.empty()  # Clear previous content
             
             # Show main prediction
-            st.success(f"🎯 Prediction: **{prediction:.2%}**")
+            st.success(f"ðŸŽ¯ **PREDICTION RESULT: {prediction:.2%}**")
             st.markdown("---")
             
             # Determine engagement level
             if prediction > 0.5:
-                engagement_level = "🔥 **HIGH ENGAGEMENT**"
+                engagement_level = "ðŸ”¥ **HIGH ENGAGEMENT**"
                 level_color = "green"
+                level_emoji = "ðŸ”¥"
             elif prediction > 0.3:
-                engagement_level = "📊 **MODERATE ENGAGEMENT**"
+                engagement_level = "ðŸ“Š **MODERATE ENGAGEMENT**"
                 level_color = "blue"
+                level_emoji = "ðŸ“Š"
             else:
-                engagement_level = "📉 **LOW ENGAGEMENT**"
+                engagement_level = "ðŸ“‰ **LOW ENGAGEMENT**"
                 level_color = "orange"
+                level_emoji = "ðŸ“‰"
             
-            st.markdown(f"### Engagement Level\n{engagement_level}")
+            st.markdown(f"### {level_emoji} Engagement Level Prediction")
+            st.markdown(engagement_level)
+            st.progress(prediction)
             st.markdown("---")
             
             # KEY FACTORS INFLUENCING PREDICTION
-            st.markdown("### 🔑 Key Factors")
+            st.markdown("### ðŸ”‘ Key Factors")
             
             # Analyze input features that have highest impact
             factors_impact = []
             
             # High positive impact factors
             if sentiment_score > 0.5:
-                factors_impact.append(("😊 Positive Sentiment", "Increases engagement", "+High"))
+                factors_impact.append(("ðŸ˜Š Positive Sentiment", "Increases engagement", "+High"))
             if sentiment_score < -0.5:
-                factors_impact.append(("😞 Negative Sentiment", "Decreases engagement", "-High"))
+                factors_impact.append(("ðŸ˜ž Negative Sentiment", "Decreases engagement", "-High"))
             
             if toxicity_score < 0.2:
-                factors_impact.append(("✅ Low Toxicity", "Boosts engagement", "+High"))
+                factors_impact.append(("âœ… Low Toxicity", "Boosts engagement", "+High"))
             if toxicity_score > 0.7:
-                factors_impact.append(("⚠️ High Toxicity", "Hurts engagement", "-High"))
+                factors_impact.append(("âš ï¸ High Toxicity", "Hurts engagement", "-High"))
             
             if user_engagement_growth > 20:
-                factors_impact.append(("📈 High Growth Rate", "Strong predictor", "+High"))
+                factors_impact.append(("ðŸ“ˆ High Growth Rate", "Strong predictor", "+High"))
             if user_engagement_growth < -20:
-                factors_impact.append(("📉 Low Growth Rate", "Negative indicator", "-High"))
+                factors_impact.append(("ðŸ“‰ Low Growth Rate", "Negative indicator", "-High"))
             
             if buzz_change_rate > 15:
-                factors_impact.append(("🔥 Trending Topic", "High visibility", "+Medium"))
+                factors_impact.append(("ðŸ”¥ Trending Topic", "High visibility", "+Medium"))
             if buzz_change_rate < -15:
-                factors_impact.append(("❄️ Declining Topic", "Low visibility", "-Medium"))
+                factors_impact.append(("â„ï¸ Declining Topic", "Low visibility", "-Medium"))
             
             platform_impact = {
                 'Instagram': '+High',
@@ -546,7 +565,7 @@ if predict_button:
                 'Facebook': '+Low',
                 'LinkedIn': '+Medium'
             }
-            factors_impact.append((f"📱 {platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
+            factors_impact.append((f"ðŸ“± {platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
             
             # Display factors
             for factor_name, description, impact in factors_impact[:5]:
@@ -563,23 +582,23 @@ if predict_button:
             st.markdown("---")
             
             # RECOMMENDATIONS
-            st.markdown("### 💡 Recommendations")
+            st.markdown("### ðŸ’¡ Recommendations")
             
             recommendations = []
             if sentiment_score < 0.3:
-                recommendations.append("🎯 Increase positive sentiment in post content")
+                recommendations.append("ðŸŽ¯ Increase positive sentiment in post content")
             if toxicity_score > 0.3:
-                recommendations.append("🛡️ Review content for potentially offensive language")
+                recommendations.append("ðŸ›¡ï¸ Review content for potentially offensive language")
             if platform == 'Facebook':
-                recommendations.append("📱 Consider cross-posting to Instagram/TikTok for better reach")
+                recommendations.append("ðŸ“± Consider cross-posting to Instagram/TikTok for better reach")
             if buzz_change_rate < 0:
-                recommendations.append("🔥 Post about trending topics for higher visibility")
+                recommendations.append("ðŸ”¥ Post about trending topics for higher visibility")
             if user_engagement_growth < 5:
-                recommendations.append("📊 Build user base and engagement history")
+                recommendations.append("ðŸ“Š Build user base and engagement history")
             
             if not recommendations:
-                recommendations.append("✨ Content looks great! Consider consistent posting schedule")
-                recommendations.append("📈 Monitor engagement trends to optimize further")
+                recommendations.append("âœ¨ Content looks great! Consider consistent posting schedule")
+                recommendations.append("ðŸ“ˆ Monitor engagement trends to optimize further")
             
             for i, rec in enumerate(recommendations[:4], 1):
                 st.markdown(f"{i}. {rec}")
@@ -587,7 +606,7 @@ if predict_button:
             st.markdown("---")
             
             # MODEL CONFIDENCE
-            st.markdown("### 🎓 Model Confidence")
+            st.markdown("### ðŸŽ“ Model Confidence")
             
             # Calculate confidence based on input variance
             all_inputs = [sentiment_score, toxicity_score, user_engagement_growth, buzz_change_rate]
@@ -599,11 +618,11 @@ if predict_button:
             st.progress(confidence)
             
             if confidence > 0.8:
-                st.success("✅ High confidence prediction")
+                st.success("âœ… High confidence prediction")
             elif confidence > 0.6:
-                st.info("ℹ️ Medium confidence - results may vary")
+                st.info("â„¹ï¸ Medium confidence - results may vary")
             else:
-                st.warning("⚠️ Lower confidence - gather more data")
+                st.warning("âš ï¸ Lower confidence - gather more data")
             
             st.markdown("---")
             
@@ -613,7 +632,7 @@ if predict_button:
                     pred_explainer = PredictionExplainer()
                     explanation = pred_explainer.explain_engagement_prediction(prediction, input_data)
                     
-                    with st.expander("📊 Advanced Analysis", expanded=False):
+                    with st.expander("ðŸ“Š Advanced Analysis", expanded=False):
                         st.markdown(explanation['interpretation'])
                         
                         if explanation['recommendations']:
@@ -626,7 +645,7 @@ if predict_button:
             
             # Previous predictions
             st.markdown("---")
-            st.markdown("### 📊 Session Stats")
+            st.markdown("### ðŸ“Š Session Stats")
             total_preds = get_total_predictions()
             col_s1, col_s2, col_s3 = st.columns(3)
             with col_s1:
@@ -634,15 +653,15 @@ if predict_button:
             with col_s2:
                 st.metric("Avg Engagement", f"{prediction:.2%}")
             with col_s3:
-                st.metric("Status", "✅ Active")
+                st.metric("Status", "âœ… Active")
 
     except Exception as e:
-        st.error(f"❌ Prediction error: {e}")
+        st.error(f"âŒ Prediction error: {e}")
         logger.error(f"Prediction error: {e}", exc_info=True)
 
 # Footer
 st.markdown("---")
-st.markdown("### 💡 Tips for Better Engagement")
+st.markdown("### ðŸ’¡ Tips for Better Engagement")
 st.markdown("""
 - **Positive sentiment** generally leads to higher engagement
 - **Low toxicity** is crucial for good engagement
@@ -652,7 +671,7 @@ st.markdown("""
 
 # Monitoring & Analytics Section
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📊 Monitoring & Analytics")
+st.sidebar.markdown("### ðŸ“Š Monitoring & Analytics")
 
 # Session metrics - Load from database
 if 'start_time' not in st.session_state:
@@ -667,23 +686,23 @@ uptime_minutes = uptime.seconds // 60
 
 col1, col2 = st.sidebar.columns(2)
 with col1:
-    st.metric("🎯 Predictions", total_predictions, help="Total predictions made (persists across refreshes)")
+    st.metric("ðŸŽ¯ Predictions", total_predictions, help="Total predictions made (persists across refreshes)")
 with col2:
-    st.metric("⏱️ Uptime", f"{uptime_minutes} min", help="Current session uptime")
+    st.metric("â±ï¸ Uptime", f"{uptime_minutes} min", help="Current session uptime")
 
-st.sidebar.metric("🤖 Model Status", "✅ Active", help="Model is loaded and ready")
+st.sidebar.metric("ðŸ¤– Model Status", "âœ… Active", help="Model is loaded and ready")
 
 # Security and Streaming Status
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🔐 Security & Streaming")
+st.sidebar.markdown("### ðŸ” Security & Streaming")
 
 if SECURITY_ENABLED:
     if key_vault and key_vault.client:
-        st.sidebar.success("🔐 Key Vault: Connected")
+        st.sidebar.success("ðŸ” Key Vault: Connected")
     else:
-        st.sidebar.info("🔐 Key Vault: Fallback mode (using .env)")
+        st.sidebar.info("ðŸ” Key Vault: Fallback mode (using .env)")
 else:
-    st.sidebar.info("🔐 Security: Using environment variables")
+    st.sidebar.info("ðŸ” Security: Using environment variables")
 
 # Add a progress indicator
 if total_predictions > 0:
@@ -695,8 +714,9 @@ logger.info(f"Session metrics - Total Predictions: {total_predictions}, Uptime: 
 
 # Footer in sidebar
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🎓 Academic Project")
+st.sidebar.markdown("### ðŸŽ“ Academic Project")
 st.sidebar.caption("Cloud Computing Course")
 st.sidebar.caption("Machine Learning Pipeline")
-st.sidebar.caption("© 2025")
+st.sidebar.caption("Â© 2025")
+
 
