@@ -137,21 +137,19 @@ def load_model_from_azure():
         logger.info("Starting model load from Azure Blob Storage")
 
         # Get Azure connection string securely (Lab7 Security Criterion #13)
-        # Priority: Key Vault â†’ Streamlit Secrets â†’ Environment Variables
+        # Priority: Environment Variables → Key Vault
         connection_string = None
         
-        # Try Key Vault first (most secure - production)
-        if key_vault and key_vault.client:
+        # Try environment variables first (Azure Container Apps sets these)
+        connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+        if connection_string:
+            logger.info("Connection string from environment variable")
+        
+        # Fallback to Key Vault (for local development)
+        if not connection_string and key_vault and key_vault.client:
             connection_string = key_vault.get_storage_connection_string()
             if connection_string:
-                logger.info("ðŸ” Connection string retrieved from Azure Key Vault (secure)")
-
-
-        # Fallback to environment variables (development only)
-        if not connection_string:
-            connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
-            if connection_string:
-                logger.info("âš ï¸ Connection string from environment variable (.env)")
+                logger.info("Connection string retrieved from Azure Key Vault")
 
         if not connection_string:
             # Fallback to local files if no Azure connection
@@ -162,7 +160,7 @@ def load_model_from_azure():
         logger.info("Azure connection string found")
 
         # Show loading message with spinner
-        with st.spinner("ðŸ”„ Loading AI model from Azure Blob Storage..."):
+        with st.spinner("Loading AI model from Azure Blob Storage..."):
             # Connect to Azure Blob Storage
             blob_service_client = BlobServiceClient.from_connection_string(connection_string)
             container_client = blob_service_client.get_container_client("models")
@@ -198,15 +196,15 @@ def load_model_from_azure():
             with open(exp_path, 'r') as f:
                 experiment_results = json.load(f)
 
-            logger.info("âœ… Model successfully loaded from Azure Blob Storage")
-            st.success("âœ… Model loaded from Azure Blob Storage!")
+            logger.info("Model successfully loaded from Azure Blob Storage")
+            st.success("Model loaded from Azure Blob Storage!")
 
             return model, feature_columns, label_encoders, experiment_results
 
     except Exception as e:
         logger.error(f"Error loading from Azure: {e}", exc_info=True)
-        st.error(f"âŒ Error loading from Azure: {e}")
-        st.warning("âš ï¸ Trying local files as fallback...")
+        st.error(f"Error loading from Azure: {e}")
+        st.warning("Trying local files as fallback...")
         return load_model_local()
 
 @st.cache_resource
@@ -225,7 +223,7 @@ def load_model_local():
             with open('models/experiment_results.json', 'r') as f:
                 experiment_results = json.load(f)
 
-        st.info("ðŸ“ Model loaded from local files")
+        st.info("Model loaded from local files")
 
         return model, feature_columns, label_encoders, experiment_results
     except Exception as e:
