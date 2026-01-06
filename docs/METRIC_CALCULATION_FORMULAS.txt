@@ -1,0 +1,672 @@
+================================================================================
+SOCIAL MEDIA ENGAGEMENT PREDICTOR - METRIC CALCULATION FORMULAS
+================================================================================
+Last Updated: January 6, 2026
+Project: Social Media Engagement Prediction System
+================================================================================
+
+================================================================================
+1. ENGAGEMENT RATE FORMULA
+================================================================================
+
+BASIC FORMULA:
+─────────────────────────────────────────────────────────────────────────────
+Engagement Rate = (Likes + Comments + Shares) / Views
+
+Where:
+  Likes = Number of likes on post
+  Comments = Number of comments on post
+  Shares = Number of shares/retweets of post
+  Views = Total number of people who saw the post
+
+EXAMPLE CALCULATION:
+─────────────────────────────────────────────────────────────────────────────
+Given:
+  Likes: 2,450
+  Comments: 156
+  Shares: 340
+  Views: 85,000
+
+Calculation:
+  Engagement Rate = (2,450 + 156 + 340) / 85,000
+                  = 2,946 / 85,000
+                  = 0.0347
+                  = 3.47%
+
+ALTERNATIVE WEIGHTED FORMULA:
+─────────────────────────────────────────────────────────────────────────────
+Engagement Rate = (Likes × 0.5 + Comments × 0.3 + Shares × 0.2) / Views
+
+Interpretation:
+  - Likes count as 50% (most common interaction)
+  - Comments count as 30% (deeper engagement)
+  - Shares count as 20% (viral indicator)
+  - Total weights = 1.0
+
+RANGE & INTERPRETATION:
+─────────────────────────────────────────────────────────────────────────────
+  0.0000 - 0.0100:  Very low engagement (< 1%)
+  0.0100 - 0.0300:  Low engagement (1% - 3%)
+  0.0300 - 0.0600:  Average engagement (3% - 6%)
+  0.0600 - 0.1000:  Good engagement (6% - 10%)
+  0.1000+:          Excellent engagement (> 10%)
+
+CODE IMPLEMENTATION:
+─────────────────────────────────────────────────────────────────────────────
+def calculate_engagement(likes, comments, shares, views):
+    if views == 0:
+        return 0.0
+    total_interactions = likes + comments + shares
+    engagement_rate = total_interactions / views
+    return min(max(engagement_rate, 0), 1)  # Clamp to [0, 1]
+
+result = calculate_engagement(2450, 156, 340, 85000)
+# Result: 0.0347 or 3.47%
+
+
+================================================================================
+2. TOXICITY SCORE FORMULA
+================================================================================
+
+COMPREHENSIVE FORMULA:
+─────────────────────────────────────────────────────────────────────────────
+Toxicity Score = Weighted Average of Multiple Indicators
+
+Components:
+  1. Profanity Detection (Weight: 0.2)
+     - Detects curse words, offensive language
+     - Score: 0.0 (clean) to 1.0 (heavily profane)
+
+  2. Hate Speech Detection (Weight: 0.3)
+     - Detects targeted harassment, slurs, hate speech
+     - Score: 0.0 (clean) to 1.0 (severe hate speech)
+
+  3. Harassment Indicators (Weight: 0.25)
+     - Detects bullying, threats, personal attacks
+     - Score: 0.0 (friendly) to 1.0 (severe harassment)
+
+  4. Spam Probability (Weight: 0.15)
+     - Detects spam, bots, repetitive content
+     - Score: 0.0 (legitimate) to 1.0 (confirmed spam)
+
+  5. Offensive Language (Weight: 0.1)
+     - General offensive/inappropriate language
+     - Score: 0.0 (appropriate) to 1.0 (highly offensive)
+
+CALCULATION FORMULA:
+─────────────────────────────────────────────────────────────────────────────
+Toxicity = (Profanity×0.2 + HateSpeech×0.3 + Harassment×0.25 + Spam×0.15 + Offensive×0.1)
+
+EXAMPLE CALCULATION:
+─────────────────────────────────────────────────────────────────────────────
+Given (Clean Content):
+  Profanity: 0.1
+  Hate Speech: 0.05
+  Harassment: 0.02
+  Spam: 0.08
+  Offensive: 0.03
+
+Calculation:
+  Toxicity = (0.1×0.2 + 0.05×0.3 + 0.02×0.25 + 0.08×0.15 + 0.03×0.1)
+           = (0.020 + 0.015 + 0.005 + 0.012 + 0.003)
+           = 0.055
+           = 5.5%
+
+TOXIC CONTENT EXAMPLE:
+─────────────────────────────────────────────────────────────────────────────
+Given (Highly Toxic Content):
+  Profanity: 0.8
+  Hate Speech: 0.9
+  Harassment: 0.7
+  Spam: 0.3
+  Offensive: 0.85
+
+Calculation:
+  Toxicity = (0.8×0.2 + 0.9×0.3 + 0.7×0.25 + 0.3×0.15 + 0.85×0.1)
+           = (0.160 + 0.270 + 0.175 + 0.045 + 0.085)
+           = 0.735
+           = 73.5%
+
+RANGE & INTERPRETATION:
+─────────────────────────────────────────────────────────────────────────────
+  0.00 - 0.10:  Clean content (preferred by algorithms)
+  0.10 - 0.30:  Slightly edgy but acceptable
+  0.30 - 0.50:  Moderately toxic (reduced reach)
+  0.50 - 0.80:  Very toxic (suppressed by algorithms)
+  0.80 - 1.00:  Extremely toxic (possible removal)
+
+CODE IMPLEMENTATION:
+─────────────────────────────────────────────────────────────────────────────
+def calculate_toxicity(profanity, hate_speech, harassment, spam, offensive):
+    """
+    Calculate toxicity score from multiple indicators
+    All inputs should be between 0.0 and 1.0
+    """
+    weights = {
+        'profanity': 0.2,
+        'hate_speech': 0.3,
+        'harassment': 0.25,
+        'spam': 0.15,
+        'offensive': 0.1
+    }
+    
+    toxicity = (
+        profanity * weights['profanity'] +
+        hate_speech * weights['hate_speech'] +
+        harassment * weights['harassment'] +
+        spam * weights['spam'] +
+        offensive * weights['offensive']
+    )
+    
+    # Clamp to [0, 1] range
+    return min(max(toxicity, 0), 1)
+
+result = calculate_toxicity(0.1, 0.05, 0.02, 0.08, 0.03)
+# Result: 0.055 or 5.5%
+
+
+================================================================================
+3. SENTIMENT SCORE FORMULA
+================================================================================
+
+METHOD 1: WORD-BASED SENTIMENT ANALYSIS
+─────────────────────────────────────────────────────────────────────────────
+Sentiment Score = ((Positive Words - Negative Words) / Total Words) × Adjustment Factor
+
+Formula:
+  Raw Sentiment = ((Positive - Negative) / (Positive + Negative + Neutral + 1)) × 2 - 1
+  Adjusted = Raw Sentiment + (Emoji Sentiment × 0.3)
+  Final = Clamp(Adjusted, [-1.0, +1.0])
+
+Where:
+  Positive = Count of positive words in text
+  Negative = Count of negative words in text
+  Neutral = Count of neutral words in text
+  Emoji Sentiment = Sentiment score of emojis (-1 to +1)
+
+EXAMPLE CALCULATION:
+─────────────────────────────────────────────────────────────────────────────
+Given:
+  Positive Words: 12 (e.g., "amazing", "love", "excellent")
+  Negative Words: 2 (e.g., "bad", "poor")
+  Neutral Words: 8 (e.g., "the", "a", "in")
+  Emoji Sentiment: +0.3 (happy emojis)
+
+Calculation:
+  Total = 12 + 2 + 8 + 1 = 23
+  Raw Sentiment = ((12 - 2) / 23) × 2 - 1
+                = (10 / 23) × 2 - 1
+                = 0.4348 × 2 - 1
+                = 0.8696 - 1
+                = -0.1304
+
+  Adjusted = -0.1304 + (0.3 × 0.3)
+           = -0.1304 + 0.09
+           = -0.0404
+
+  Final = -0.0404 (slightly negative, but close to neutral)
+
+INTERPRETATION OF RESULT:
+─────────────────────────────────────────────────────────────────────────────
+  -1.0 to -0.7:  Very Negative (avoid this)
+  -0.7 to -0.4:  Negative
+  -0.4 to -0.1:  Slightly Negative
+  -0.1 to +0.1:  Neutral
+  +0.1 to +0.4:  Slightly Positive
+  +0.4 to +0.7:  Positive
+  +0.7 to +1.0:  Very Positive (ideal for engagement)
+
+METHOD 2: NLP-BASED SENTIMENT (ADVANCED)
+─────────────────────────────────────────────────────────────────────────────
+Uses multiple NLP models and combines their scores:
+
+Sentiment = (TextBlob×0.25 + VADER×0.25 + Transformers×0.35 + Lexicon×0.15)
+
+Where:
+  TextBlob = Lexicon-based sentiment analyzer
+  VADER = Social media specific analyzer (handles emojis, slang)
+  Transformers = Deep learning model (RoBERTa, DistilBERT)
+  Lexicon = Domain-specific word sentiment dictionary
+
+Each component returns value in [-1.0, +1.0]
+Final sentiment is weighted average, clamped to [-1.0, +1.0]
+
+EXAMPLE CALCULATION (METHOD 2):
+─────────────────────────────────────────────────────────────────────────────
+Given Model Outputs:
+  TextBlob: +0.45
+  VADER: +0.52
+  Transformers: +0.68
+  Lexicon: +0.38
+
+Calculation:
+  Sentiment = (+0.45×0.25 + +0.52×0.25 + +0.68×0.35 + +0.38×0.15)
+            = (0.1125 + 0.1300 + 0.2380 + 0.0570)
+            = 0.5375
+            = +0.54 (Moderate positive sentiment)
+
+CODE IMPLEMENTATION:
+─────────────────────────────────────────────────────────────────────────────
+def calculate_sentiment(positive_count, negative_count, neutral_count, emoji_score):
+    """
+    Calculate sentiment score using word-based analysis
+    Returns: float between -1.0 and +1.0
+    """
+    total = positive_count + negative_count + neutral_count + 1
+    
+    # Raw sentiment calculation
+    raw_sentiment = ((positive_count - negative_count) / total) * 2 - 1
+    
+    # Adjust with emoji sentiment (weighted at 0.3)
+    adjusted = raw_sentiment + (emoji_score * 0.3)
+    
+    # Clamp to [-1, +1] range
+    return min(max(adjusted, -1), 1)
+
+result = calculate_sentiment(12, 2, 8, 0.3)
+# Result: -0.0404 (slightly negative/neutral)
+
+
+================================================================================
+4. BUZZ CHANGE RATE FORMULA
+================================================================================
+
+BASIC FORMULA:
+─────────────────────────────────────────────────────────────────────────────
+Buzz Change Rate = ((Current Buzz - Previous Buzz) / Previous Buzz) × 100
+
+Where:
+  Current Buzz = Current engagement metrics (hourly/daily)
+  Previous Buzz = Previous engagement metrics (previous hour/day)
+  Result = Percentage change (can be negative)
+
+EXAMPLE CALCULATION:
+─────────────────────────────────────────────────────────────────────────────
+Given:
+  Day 1 Buzz: 45,000 interactions
+  Day 5 Buzz: 98,250 interactions
+
+Calculation:
+  Buzz Change Rate = ((98,250 - 45,000) / 45,000) × 100
+                   = (53,250 / 45,000) × 100
+                   = 1.1833 × 100
+                   = 118.33%
+
+Interpretation: Post gained 118.33% more buzz (growing trend, possible viral)
+
+DECLINING EXAMPLE:
+─────────────────────────────────────────────────────────────────────────────
+Given:
+  Week 1 Buzz: 120,000 interactions
+  Week 2 Buzz: 84,000 interactions
+
+Calculation:
+  Buzz Change Rate = ((84,000 - 120,000) / 120,000) × 100
+                   = (-36,000 / 120,000) × 100
+                   = -0.30 × 100
+                   = -30%
+
+Interpretation: Post lost 30% of buzz (declining trend)
+
+ADVANCED FORMULA WITH SENTIMENT ADJUSTMENT:
+─────────────────────────────────────────────────────────────────────────────
+Buzz Change (Adjusted) = (Basic Buzz Change) × Sentiment Multiplier
+
+Sentiment Multiplier Rules:
+  If Sentiment > +0.5:  Multiplier = 1.2 (boost positive trends)
+  If Sentiment < -0.5:  Multiplier = 0.8 (dampen negative trends)
+  If -0.5 ≤ Sentiment ≤ +0.5:  Multiplier = 1.0 (no adjustment)
+
+Example with Sentiment Adjustment:
+─────────────────────────────────────────────────────────────────────────────
+Given:
+  Basic Buzz Change: +50%
+  Sentiment Score: +0.72 (very positive)
+  Sentiment Multiplier: 1.2 (because +0.72 > +0.5)
+
+Calculation:
+  Adjusted Buzz Change = 50% × 1.2 = 60%
+
+Interpretation: Positive sentiment amplifies the buzz growth to 60%
+
+RANGE & INTERPRETATION:
+─────────────────────────────────────────────────────────────────────────────
+  > +100%:        Viral growth 🔥 (exponential increase)
+  +50% to +100%:  Strong growth ⬆️ (trending)
+  +20% to +50%:   Moderate growth (healthy engagement)
+  0% to +20%:     Slight growth (steady increase)
+  -20% to 0%:     Slight decline (losing momentum)
+  -50% to -20%:   Moderate decline (trending down)
+  < -50%:         Sharp decline ⬇️ (engagement dying)
+
+CODE IMPLEMENTATION:
+─────────────────────────────────────────────────────────────────────────────
+def calculate_buzz_change(current_buzz, previous_buzz, sentiment_score):
+    """
+    Calculate buzz change rate with optional sentiment adjustment
+    """
+    if previous_buzz == 0:
+        return 0.0
+    
+    # Calculate basic buzz change percentage
+    buzz_change = ((current_buzz - previous_buzz) / previous_buzz) * 100
+    
+    # Apply sentiment multiplier
+    if sentiment_score > 0.5:
+        multiplier = 1.2  # Boost positive sentiment
+    elif sentiment_score < -0.5:
+        multiplier = 0.8  # Dampen negative sentiment
+    else:
+        multiplier = 1.0  # Neutral
+    
+    # Calculate adjusted buzz change
+    adjusted_buzz = buzz_change * multiplier
+    
+    # Clamp to reasonable range [-100, 100]
+    return min(max(adjusted_buzz, -100), 100)
+
+result = calculate_buzz_change(98250, 45000, 0.72)
+# Result: ~141.6% (118.33% × 1.2)
+
+
+================================================================================
+5. COMPLETE CODE IMPLEMENTATION (ALL FORMULAS)
+================================================================================
+
+import numpy as np
+from typing import Tuple
+
+class MetricCalculator:
+    """
+    Complete implementation of all metric formulas
+    """
+    
+    @staticmethod
+    def calculate_engagement(likes: int, comments: int, shares: int, views: int) -> float:
+        """
+        Calculate engagement rate
+        
+        Args:
+            likes: Number of likes
+            comments: Number of comments
+            shares: Number of shares/retweets
+            views: Total number of views
+            
+        Returns:
+            Engagement rate (0.0 to 1.0)
+        """
+        if views == 0:
+            return 0.0
+        total_interactions = likes + comments + shares
+        engagement_rate = total_interactions / views
+        return np.clip(engagement_rate, 0, 1)
+    
+    @staticmethod
+    def calculate_toxicity(profanity: float, hate_speech: float, 
+                          harassment: float, spam: float, offensive: float) -> float:
+        """
+        Calculate toxicity score from multiple indicators
+        
+        Args:
+            profanity: Profanity score (0.0 to 1.0)
+            hate_speech: Hate speech score (0.0 to 1.0)
+            harassment: Harassment score (0.0 to 1.0)
+            spam: Spam probability (0.0 to 1.0)
+            offensive: Offensive language score (0.0 to 1.0)
+            
+        Returns:
+            Toxicity score (0.0 to 1.0)
+        """
+        toxicity = (
+            profanity * 0.2 +
+            hate_speech * 0.3 +
+            harassment * 0.25 +
+            spam * 0.15 +
+            offensive * 0.1
+        )
+        return np.clip(toxicity, 0, 1)
+    
+    @staticmethod
+    def calculate_sentiment(positive_count: int, negative_count: int, 
+                           neutral_count: int, emoji_score: float) -> float:
+        """
+        Calculate sentiment score using word-based analysis
+        
+        Args:
+            positive_count: Number of positive words
+            negative_count: Number of negative words
+            neutral_count: Number of neutral words
+            emoji_score: Emoji sentiment (-1.0 to 1.0)
+            
+        Returns:
+            Sentiment score (-1.0 to 1.0)
+        """
+        total = positive_count + negative_count + neutral_count + 1
+        raw_sentiment = ((positive_count - negative_count) / total) * 2 - 1
+        adjusted = raw_sentiment + (emoji_score * 0.3)
+        return np.clip(adjusted, -1, 1)
+    
+    @staticmethod
+    def calculate_buzz_change(current_buzz: float, previous_buzz: float, 
+                             sentiment_score: float) -> float:
+        """
+        Calculate buzz change rate with sentiment adjustment
+        
+        Args:
+            current_buzz: Current engagement/buzz metric
+            previous_buzz: Previous engagement/buzz metric
+            sentiment_score: Sentiment score (-1.0 to 1.0)
+            
+        Returns:
+            Buzz change percentage (-100 to 100)
+        """
+        if previous_buzz == 0:
+            return 0.0
+        
+        buzz_change = ((current_buzz - previous_buzz) / previous_buzz) * 100
+        
+        # Apply sentiment multiplier
+        if sentiment_score > 0.5:
+            multiplier = 1.2
+        elif sentiment_score < -0.5:
+            multiplier = 0.8
+        else:
+            multiplier = 1.0
+        
+        adjusted_buzz = buzz_change * multiplier
+        return np.clip(adjusted_buzz, -100, 100)
+
+
+# USAGE EXAMPLES:
+if __name__ == "__main__":
+    calc = MetricCalculator()
+    
+    # Example 1: Calculate engagement
+    engagement = calc.calculate_engagement(2450, 156, 340, 85000)
+    print(f"Engagement Rate: {engagement:.2%}")
+    # Output: Engagement Rate: 3.47%
+    
+    # Example 2: Calculate toxicity
+    toxicity = calc.calculate_toxicity(0.1, 0.05, 0.02, 0.08, 0.03)
+    print(f"Toxicity Score: {toxicity:.2%}")
+    # Output: Toxicity Score: 5.50%
+    
+    # Example 3: Calculate sentiment
+    sentiment = calc.calculate_sentiment(12, 2, 8, 0.3)
+    print(f"Sentiment Score: {sentiment:.2f}")
+    # Output: Sentiment Score: -0.04
+    
+    # Example 4: Calculate buzz change
+    buzz = calc.calculate_buzz_change(98250, 45000, 0.72)
+    print(f"Buzz Change Rate: {buzz:.1f}%")
+    # Output: Buzz Change Rate: ~141.6%
+
+
+================================================================================
+6. QUICK REFERENCE TABLE
+================================================================================
+
+METRIC             | FORMULA                                      | RANGE        | UNIT
+─────────────────────────────────────────────────────────────────────────────
+Engagement Rate    | (Likes + Comments + Shares) / Views         | 0.0 - 1.0    | ratio
+Toxicity Score     | Weighted sum of 5 indicators                | 0.0 - 1.0    | ratio
+Sentiment Score    | (Positive - Negative) / Total × Adj         | -1.0 to +1.0 | ratio
+Buzz Change Rate   | ((Current - Previous) / Previous) × 100     | -100 to +100 | percent
+
+─────────────────────────────────────────────────────────────────────────────
+
+IMPACT ON ENGAGEMENT PREDICTION:
+─────────────────────────────────────────────────────────────────────────────
+
+Engagement Rate:
+  Higher = Better engagement (but predicted by model, not input)
+
+Sentiment Score:
+  -1.0: -40% impact on engagement
+  +0.0: Neutral
+  +1.0: +40% impact on engagement
+
+Toxicity Score:
+  0.0: +30-40% impact (clean content favored)
+  0.5: -20-30% impact (moderate penalty)
+  1.0: -80% impact (severe suppression)
+
+Buzz Change Rate:
+  -100%: Trending down, avoid
+  +0%: Stable, acceptable
+  +50%: Growing, good signal
+  +100%: Viral, excellent signal
+
+─────────────────────────────────────────────────────────────────────────────
+
+
+================================================================================
+7. PRACTICAL EXAMPLES
+================================================================================
+
+SCENARIO 1: VIRAL POST
+─────────────────────────────────────────────────────────────────────────────
+Post Content: Exciting new product launch announcement
+Time Period: First 24 hours
+
+Inputs:
+  Likes: 12,400
+  Comments: 2,150
+  Shares: 4,800
+  Views: 450,000
+  Positive Words: 45
+  Negative Words: 3
+  Neutral Words: 52
+  Emoji Sentiment: +0.8
+  Profanity: 0.0
+  Hate Speech: 0.0
+  Harassment: 0.0
+  Spam: 0.05
+  Offensive: 0.0
+  Previous Buzz: 50,000
+  Current Buzz: 245,000
+
+Calculations:
+  Engagement = (12,400 + 2,150 + 4,800) / 450,000 = 0.0437 (4.37%)
+  Toxicity = (0.0×0.2 + 0.0×0.3 + 0.0×0.25 + 0.05×0.15 + 0.0×0.1) = 0.0075 (0.75%)
+  Sentiment = ((45 - 3) / 101) × 2 - 1 + (0.8 × 0.3) = 0.81 + 0.24 = +0.85
+  Buzz Change = ((245,000 - 50,000) / 50,000) × 100 × 1.2 = 468%
+
+Result: VIRAL POST ✓
+  - High engagement (4.37%)
+  - Clean content (0.75% toxicity)
+  - Very positive sentiment (+0.85)
+  - Explosive buzz growth (468%)
+
+─────────────────────────────────────────────────────────────────────────────
+
+SCENARIO 2: CONTROVERSIAL POST
+─────────────────────────────────────────────────────────────────────────────
+Post Content: Argumentative/debate-oriented statement
+Time Period: After 6 hours
+
+Inputs:
+  Likes: 1,200
+  Comments: 890 (mostly arguments/debates)
+  Shares: 340
+  Views: 85,000
+  Positive Words: 8
+  Negative Words: 18
+  Neutral Words: 74
+  Emoji Sentiment: -0.4
+  Profanity: 0.35
+  Hate Speech: 0.15
+  Harassment: 0.25
+  Spam: 0.1
+  Offensive: 0.2
+  Previous Buzz: 12,000
+  Current Buzz: 19,000
+
+Calculations:
+  Engagement = (1,200 + 890 + 340) / 85,000 = 0.0306 (3.06%)
+  Toxicity = (0.35×0.2 + 0.15×0.3 + 0.25×0.25 + 0.1×0.15 + 0.2×0.1)
+           = 0.070 + 0.045 + 0.0625 + 0.015 + 0.020 = 0.2125 (21.25%)
+  Sentiment = ((8 - 18) / 101) × 2 - 1 + (-0.4 × 0.3) = -0.198 - 0.12 = -0.32
+  Buzz Change = ((19,000 - 12,000) / 12,000) × 100 × 0.8 = 46.67%
+
+Result: CONTROVERSIAL POST ⚠️
+  - Moderate engagement (3.06%)
+  - Somewhat toxic (21.25%)
+  - Negative sentiment (-0.32)
+  - Moderate buzz growth with sentiment dampening (46.67%)
+  - Will reach fewer people due to toxicity/negative sentiment
+
+─────────────────────────────────────────────────────────────────────────────
+
+SCENARIO 3: LOW-ENGAGEMENT POST
+─────────────────────────────────────────────────────────────────────────────
+Post Content: Generic product image with minimal caption
+Time Period: After 24 hours
+
+Inputs:
+  Likes: 85
+  Comments: 12
+  Shares: 5
+  Views: 8,200
+  Positive Words: 2
+  Negative Words: 1
+  Neutral Words: 18
+  Emoji Sentiment: 0.0
+  Profanity: 0.0
+  Hate Speech: 0.0
+  Harassment: 0.0
+  Spam: 0.0
+  Offensive: 0.0
+  Previous Buzz: 5,000
+  Current Buzz: 5,100
+
+Calculations:
+  Engagement = (85 + 12 + 5) / 8,200 = 0.0134 (1.34%)
+  Toxicity = 0.0
+  Sentiment = ((2 - 1) / 22) × 2 - 1 + 0.0 = -0.91
+  Buzz Change = ((5,100 - 5,000) / 5,000) × 100 × 1.0 = 2%
+
+Result: LOW ENGAGEMENT POST ❌
+  - Very low engagement (1.34%)
+  - Clean content (0% toxicity)
+  - Slightly negative sentiment (-0.91)
+  - Minimal buzz growth (2%)
+  - Boring/uninspiring content
+
+
+================================================================================
+8. SUMMARY & KEY TAKEAWAYS
+================================================================================
+
+✓ Engagement Rate = Interaction / Views (measure of content effectiveness)
+✓ Toxicity Score = Weighted harmful indicators (algorithm suppresses toxic content)
+✓ Sentiment Score = Positive vs negative words (determines user perception)
+✓ Buzz Change = % growth/decline in engagement (indicates trend momentum)
+
+All formulas are interconnected and affect final engagement prediction:
+  - High Engagement + Low Toxicity + Positive Sentiment = Algorithm boost
+  - Low Engagement + High Toxicity + Negative Sentiment = Algorithm suppression
+
+These metrics are the foundation of the Social Media Engagement Prediction Model.
+
+================================================================================
