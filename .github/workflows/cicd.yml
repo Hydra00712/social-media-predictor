@@ -17,7 +17,7 @@ permissions:
 
 env:
   PYTHON_VERSION: '3.11'
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/social-media-predictor
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner.toLowerCase() }}/social-media-predictor
   AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING || 'UseDevelopmentStorage=true' }}
 
 jobs:
