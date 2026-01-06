@@ -15,6 +15,70 @@ import logging
 from datetime import datetime
 import sqlite3
 
+# Custom CSS for better layout and centering
+st.set_page_config(
+    page_title="Social Media Engagement Predictor",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS styling
+custom_css = """
+<style>
+    /* Center main content */
+    .main > div > div > div > div > div {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Center metrics */
+    [data-testid="metric-container"] {
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* Better card styling */
+    .prediction-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 1rem;
+        color: white;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    /* Center headers */
+    h1, h2, h3 {
+        text-align: center;
+    }
+    
+    /* Better result boxes */
+    .result-box {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        padding: 1.5rem;
+        border-radius: 0.8rem;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    .factor-box {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+    
+    /* Centered column content */
+    [data-testid="column"] {
+        text-align: center;
+    }
+</style>
+"""
+
+st.markdown(custom_css, unsafe_allow_html=True)
+
 # Configure logging for monitoring
 logging.basicConfig(
     level=logging.INFO,
@@ -303,14 +367,14 @@ left_col, right_col = st.columns([1, 2], gap="large")
 
 # RIGHT COLUMN - Input Form
 with right_col:
-    st.header("Enter Post Details")
+    st.header("📝 Enter Post Details")
 
     # Add helpful instructions
-    with st.expander("How to use this app", expanded=False):
+    with st.expander("ℹ️ How to use this app", expanded=False):
         st.markdown("""
-        **Step 1:** Fill in all the post details below
-        **Step 2:** Click the "Predict Engagement" button
-        **Step 3:** View your predicted engagement rate & explainability on the left
+        **Step 1:** Fill in all the post details below  
+        **Step 2:** Click the "🔮 Predict Engagement" button  
+        **Step 3:** View your predicted engagement rate & explainability on the left  
 
         **Note:** All predictions are saved to the database and persist across page refreshes!
         """)
@@ -469,31 +533,33 @@ if predict_button:
         st.markdown("---")
         st.success("✅ Prediction Complete!")
 
-        # Create a nice result card
-        col_a, col_b, col_c = st.columns([1, 2, 1])
+        # Create centered result card
+        col_a, col_b, col_c = st.columns([0.5, 2, 0.5])
         with col_b:
-            # Main prediction metric
+            # Main prediction metric - centered
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
             st.metric(
-                label="Predicted Engagement Rate",
+                label="📊 Predicted Engagement Rate",
                 value=f"{prediction:.2%}",
                 delta=None,
                 help="Predicted percentage of users who will engage with this post"
             )
+            st.markdown("</div>", unsafe_allow_html=True)
 
             # Interpretation with emojis
             st.markdown("---")
             if prediction > 0.5:
                 st.success("🚀 High Engagement Expected!")
-                st.markdown("This post is likely to perform very well!")
+                st.markdown("<p style='text-align: center;'>This post is likely to perform very well!</p>", unsafe_allow_html=True)
             elif prediction > 0.3:
                 st.info("📈 Moderate Engagement Expected")
-                st.markdown("This post should get decent engagement.")
+                st.markdown("<p style='text-align: center;'>This post should get decent engagement.</p>", unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Low Engagement Expected")
-                st.markdown("Consider optimizing your content for better results.")
+                st.markdown("<p style='text-align: center;'>Consider optimizing your content for better results.</p>", unsafe_allow_html=True)
 
             # Show prediction saved confirmation
-            st.caption(f"Prediction #{total_predictions} saved to database")
+            st.caption(f"✓ Prediction #{total_predictions} saved to database")
 
         # ========================================
         # UPDATE LEFT COLUMN WITH EXPLAINABILITY
@@ -501,53 +567,52 @@ if predict_button:
         with left_col:
             st.empty()  # Clear previous content
             
-            # Show main prediction
-            st.success(f"🎯 Prediction Result: {prediction:.2%}")
+            # Show main prediction - centered
+            st.markdown("<div style='text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 0.8rem; color: white;'>", unsafe_allow_html=True)
+            st.markdown(f"### 🎯 Prediction Result: {prediction:.2%}")
+            st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("---")
             
             # Determine engagement level
             if prediction > 0.5:
-                engagement_level = "HIGH ENGAGEMENT"
-                level_color = "green"
-                level_emoji = "HIGH"
+                engagement_level = "🔥 HIGH ENGAGEMENT"
+                level_emoji = "🟢"
             elif prediction > 0.3:
-                engagement_level = "MODERATE ENGAGEMENT"
-                level_color = "blue"
-                level_emoji = "MODERATE"
+                engagement_level = "📊 MODERATE ENGAGEMENT"
+                level_emoji = "🟡"
             else:
-                engagement_level = "LOW ENGAGEMENT"
-                level_color = "orange"
-                level_emoji = "LOW"
+                engagement_level = "📉 LOW ENGAGEMENT"
+                level_emoji = "🔴"
             
-            st.markdown(f"### 📊 Engagement Level")
-            st.markdown(engagement_level)
+            st.markdown(f"<div style='text-align: center;'><h3>{level_emoji} Engagement Level</h3></div>", unsafe_allow_html=True)
+            st.markdown(f"<p style='text-align: center; font-size: 1.2rem; font-weight: bold;'>{engagement_level}</p>", unsafe_allow_html=True)
             st.progress(prediction)
             st.markdown("---")
             
             # KEY FACTORS INFLUENCING PREDICTION
-            st.markdown("### 🔑 Key Factors")
+            st.markdown("<div style='text-align: center;'><h3>🔑 Key Factors</h3></div>", unsafe_allow_html=True)
             
             # Analyze input features that have highest impact
             factors_impact = []
             
             # High positive impact factors
             if sentiment_score > 0.5:
-                factors_impact.append(("Positive Sentiment", "Increases engagement", "+High"))
+                factors_impact.append(("😊 Positive Sentiment", "Increases engagement", "+High"))
             if sentiment_score < -0.5:
-                factors_impact.append(("Negative Sentiment", "Decreases engagement", "-High"))
+                factors_impact.append(("😞 Negative Sentiment", "Decreases engagement", "-High"))
             
             if toxicity_score < 0.2:
-                factors_impact.append(("Low Toxicity", "Boosts engagement", "+High"))
+                factors_impact.append(("✨ Low Toxicity", "Boosts engagement", "+High"))
             if toxicity_score > 0.7:
-                factors_impact.append(("High Toxicity", "Hurts engagement", "-High"))
+                factors_impact.append(("⚠️ High Toxicity", "Hurts engagement", "-High"))
             
             if user_engagement_growth > 20:
-                factors_impact.append(("High Growth Rate", "Strong predictor", "+High"))
+                factors_impact.append(("📈 High Growth Rate", "Strong predictor", "+High"))
             if user_engagement_growth < -20:
-                factors_impact.append(("Low Growth Rate", "Negative indicator", "-High"))
+                factors_impact.append(("📉 Low Growth Rate", "Negative indicator", "-High"))
             
             if buzz_change_rate > 15:
-                factors_impact.append(("Trending Topic", "High visibility", "+Medium"))
+                factors_impact.append(("🔥 Trending Topic", "High visibility", "+Medium"))
             if buzz_change_rate < -15:
                 factors_impact.append(("Declining Topic", "Low visibility", "-Medium"))
             
@@ -560,22 +625,34 @@ if predict_button:
             }
             factors_impact.append((f"{platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
             
-            # Display factors
+            # Display factors with better styling
             for factor_name, description, impact in factors_impact[:5]:
-                col_f1, col_f2 = st.columns([3, 1])
-                with col_f1:
-                    st.markdown(f"**{factor_name}**")
-                    st.caption(description)
-                with col_f2:
-                    if '+' in impact:
-                        st.success(impact)
-                    else:
-                        st.error(impact)
+                if '+' in impact:
+                    color = "#00d084"  # Green
+                    icon = "✅"
+                else:
+                    color = "#ff2b2b"  # Red
+                    icon = "❌"
+                
+                st.markdown(f"""
+                <div style='
+                    background: linear-gradient(135deg, {color}22 0%, {color}11 100%);
+                    padding: 1rem;
+                    border-left: 4px solid {color};
+                    border-radius: 0.5rem;
+                    margin: 0.5rem 0;
+                    text-align: center;
+                '>
+                    <p style='font-weight: bold; margin: 0.5rem 0;'>{icon} {factor_name}</p>
+                    <small>{description}</small>
+                    <p style='color: {color}; font-weight: bold; margin: 0.5rem 0;'>{impact}</p>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.markdown("---")
             
             # RECOMMENDATIONS
-            st.markdown("### 💬 Recommendations")
+            st.markdown("<div style='text-align: center;'><h3>💬 Recommendations</h3></div>", unsafe_allow_html=True)
             
             recommendations = []
             if sentiment_score < 0.3:
@@ -594,12 +671,12 @@ if predict_button:
                 recommendations.append("Monitor engagement trends to optimize further")
             
             for i, rec in enumerate(recommendations[:4], 1):
-                st.markdown(f"{i}. {rec}")
+                st.markdown(f"<p style='text-align: center;'><strong>{i}.</strong> {rec}</p>", unsafe_allow_html=True)
             
             st.markdown("---")
             
             # MODEL CONFIDENCE
-            st.markdown("### 📈 Model Confidence")
+            st.markdown("<div style='text-align: center;'><h3>📈 Model Confidence</h3></div>", unsafe_allow_html=True)
             
             # Calculate confidence based on input variance
             all_inputs = [sentiment_score, toxicity_score, user_engagement_growth, buzz_change_rate]
@@ -607,7 +684,7 @@ if predict_button:
             confidence = max(0.5, min(0.95, 0.7 + (0.25 * (1 - variance/100))))
             
             confidence_pct = int(confidence * 100)
-            st.markdown(f"**Confidence: {confidence_pct}%**")
+            st.markdown(f"<p style='text-align: center; font-size: 1.1rem;'><strong>Confidence: {confidence_pct}%</strong></p>", unsafe_allow_html=True)
             st.progress(confidence)
             
             if confidence > 0.8:
