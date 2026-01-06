@@ -409,6 +409,9 @@ st.markdown("<br>", unsafe_allow_html=True)
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     predict_button = st.button("🎯 Predict Engagement Rate", type="primary", use_container_width=True)
+
+if predict_button:
+    try:
         # Create input dataframe
         input_data = {
             'day_of_week': day_of_week,
