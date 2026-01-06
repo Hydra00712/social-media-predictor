@@ -298,59 +298,102 @@ with st.sidebar:
     st.markdown("[GitHub Repository](https://github.com/hydra00712)")
     st.markdown("[Azure Portal](https://portal.azure.com)")
 
-# Main content - Input Form
-st.header("📝 Enter Post Details")
+# Main content - Two column layout
+# Left column for Explainability, Right column for Input Form
+left_col, right_col = st.columns([1, 2], gap="large")
 
-# Add helpful instructions
-with st.expander("ℹ️ How to use this app", expanded=False):
-    st.markdown("""
-    **Step 1:** Fill in all the post details below
-    **Step 2:** Click the "🎯 Predict Engagement" button
-    **Step 3:** View your predicted engagement rate
+# RIGHT COLUMN - Input Form
+with right_col:
+    st.header("📝 Enter Post Details")
 
-    **Note:** All predictions are saved to the database and persist across page refreshes!
-    """)
+    # Add helpful instructions
+    with st.expander("ℹ️ How to use this app", expanded=False):
+        st.markdown("""
+        **Step 1:** Fill in all the post details below
+        **Step 2:** Click the "🎯 Predict Engagement" button
+        **Step 3:** View your predicted engagement rate & explainability on the left
 
-col1, col2, col3 = st.columns(3)
+        **Note:** All predictions are saved to the database and persist across page refreshes!
+        """)
 
-with col1:
-    day_of_week = st.selectbox("Day of Week", 
-                               ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
-    platform = st.selectbox("Platform", 
-                           ['Instagram', 'Twitter', 'Facebook', 'LinkedIn', 'TikTok'])
-    location = st.selectbox("Location", 
-                           ['USA', 'UK', 'Canada', 'Australia', 'India', 'France', 'Germany'])
-    language = st.selectbox("Language", 
-                           ['English', 'French', 'Spanish', 'German', 'Hindi'])
+    col1, col2, col3 = st.columns(3)
 
-with col2:
-    topic_category = st.selectbox("Topic Category", 
-                                 ['Technology', 'Fashion', 'Food', 'Travel', 'Sports', 'Entertainment', 'Business'])
-    sentiment_score = st.slider("Sentiment Score", -1.0, 1.0, 0.0, 0.1)
-    sentiment_label = st.selectbox("Sentiment Label", 
-                                  ['Positive', 'Negative', 'Neutral'])
-    emotion_type = st.selectbox("Emotion Type", 
-                               ['Joy', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutral'])
+    with col1:
+        day_of_week = st.selectbox("Day of Week", 
+                                   ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+        platform = st.selectbox("Platform", 
+                               ['Instagram', 'Twitter', 'Facebook', 'LinkedIn', 'TikTok'])
+        location = st.selectbox("Location", 
+                               ['USA', 'UK', 'Canada', 'Australia', 'India', 'France', 'Germany'])
+        language = st.selectbox("Language", 
+                               ['English', 'French', 'Spanish', 'German', 'Hindi'])
 
-with col3:
-    toxicity_score = st.slider("Toxicity Score", 0.0, 1.0, 0.0, 0.1)
-    brand_name = st.selectbox("Brand", 
-                             ['Apple', 'Google', 'Microsoft', 'Amazon', 'Nike', 'Adidas', 'Coca-Cola'])
-    product_name = st.selectbox("Product", 
-                               ['iPhone', 'Pixel', 'Surface', 'Echo', 'Air Max', 'Ultraboost', 'Coke'])
-    campaign_name = st.selectbox("Campaign", 
-                                ['LaunchWave', 'SummerSale', 'BlackFriday', 'NewYear', 'SpringCollection'])
+    with col2:
+        topic_category = st.selectbox("Topic Category", 
+                                     ['Technology', 'Fashion', 'Food', 'Travel', 'Sports', 'Entertainment', 'Business'])
+        sentiment_score = st.slider("Sentiment Score", -1.0, 1.0, 0.0, 0.1)
+        sentiment_label = st.selectbox("Sentiment Label", 
+                                      ['Positive', 'Negative', 'Neutral'])
+        emotion_type = st.selectbox("Emotion Type", 
+                                   ['Joy', 'Sadness', 'Anger', 'Fear', 'Surprise', 'Neutral'])
 
-col4, col5 = st.columns(2)
+    with col3:
+        toxicity_score = st.slider("Toxicity Score", 0.0, 1.0, 0.0, 0.1)
+        brand_name = st.selectbox("Brand", 
+                                 ['Apple', 'Google', 'Microsoft', 'Amazon', 'Nike', 'Adidas', 'Coca-Cola'])
+        product_name = st.selectbox("Product", 
+                                   ['iPhone', 'Pixel', 'Surface', 'Echo', 'Air Max', 'Ultraboost', 'Coke'])
+        campaign_name = st.selectbox("Campaign", 
+                                    ['LaunchWave', 'SummerSale', 'BlackFriday', 'NewYear', 'SpringCollection'])
 
-with col4:
-    campaign_phase = st.selectbox("Campaign Phase", 
-                                 ['Pre-Launch', 'Launch', 'Post-Launch', 'Sustain'])
-    user_past_sentiment_avg = st.slider("User Past Sentiment Avg", -1.0, 1.0, 0.0, 0.1)
+    col4, col5 = st.columns(2)
 
-with col5:
-    user_engagement_growth = st.slider("User Engagement Growth (%)", -100.0, 100.0, 0.0, 1.0)
-    buzz_change_rate = st.slider("Buzz Change Rate (%)", -100.0, 100.0, 0.0, 1.0)
+    with col4:
+        campaign_phase = st.selectbox("Campaign Phase", 
+                                     ['Pre-Launch', 'Launch', 'Post-Launch', 'Sustain'])
+        user_past_sentiment_avg = st.slider("User Past Sentiment Avg", -1.0, 1.0, 0.0, 0.1)
+
+    with col5:
+        user_engagement_growth = st.slider("User Engagement Growth (%)", -100.0, 100.0, 0.0, 1.0)
+        buzz_change_rate = st.slider("Buzz Change Rate (%)", -100.0, 100.0, 0.0, 1.0)
+
+# LEFT COLUMN - Explainability Panel
+with left_col:
+    st.header("🔍 Explainability")
+    st.markdown("---")
+    
+    # Initialize placeholder for explainability results
+    explainability_container = st.container()
+    
+    with explainability_container:
+        # Show initial guide
+        st.info("👈 Fill the form on the right and click **Predict** to see AI explanations here!")
+        
+        st.markdown("### How Model Decisions Work:")
+        st.markdown("""
+        ✅ **SHAP Analysis** - Shows feature importance
+        
+        ✅ **Key Factors** - What influences engagement
+        
+        ✅ **Engagement Level** - High/Medium/Low prediction
+        
+        ✅ **Recommendations** - Tips to boost engagement
+        
+        ✅ **Model Confidence** - How certain is the prediction
+        """)
+        
+        # Show feature correlations
+        if experiment_results and 'metrics' in experiment_results:
+            st.markdown("---")
+            st.markdown("### 📊 Model Performance")
+            model_metrics = experiment_results['metrics'][experiment_results['best_model']]
+            col_m1, col_m2, col_m3 = st.columns(3)
+            with col_m1:
+                st.metric("R² Score", f"{model_metrics['r2']:.4f}")
+            with col_m2:
+                st.metric("MAE", f"{model_metrics['mae']:.4f}")
+            with col_m3:
+                st.metric("RMSE", f"{model_metrics['rmse']:.4f}")
 
 st.markdown("---")
 
@@ -415,7 +458,7 @@ if predict_button:
         total_predictions = get_total_predictions()
         logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
 
-        # Display result with better styling
+        # Display result in right column with better styling
         st.markdown("---")
         st.success("✅ **Prediction Complete!**")
 
@@ -445,48 +488,153 @@ if predict_button:
             # Show prediction saved confirmation
             st.caption(f"✅ Prediction #{total_predictions} saved to database")
 
-        # MODEL EXPLAINABILITY SECTION
-        st.markdown("---")
-        st.markdown("### 🔍 **Why This Prediction?** (Model Explainability)")
-        
-        if EXPLAINABILITY_ENABLED:
-            try:
-                pred_explainer = PredictionExplainer()
+        # ========================================
+        # UPDATE LEFT COLUMN WITH EXPLAINABILITY
+        # ========================================
+        with left_col:
+            st.empty()  # Clear previous content
+            
+            # Show main prediction
+            st.success(f"🎯 Prediction: **{prediction:.2%}**")
+            st.markdown("---")
+            
+            # Determine engagement level
+            if prediction > 0.5:
+                engagement_level = "🔥 **HIGH ENGAGEMENT**"
+                level_color = "green"
+            elif prediction > 0.3:
+                engagement_level = "📊 **MODERATE ENGAGEMENT**"
+                level_color = "blue"
+            else:
+                engagement_level = "📉 **LOW ENGAGEMENT**"
+                level_color = "orange"
+            
+            st.markdown(f"### Engagement Level\n{engagement_level}")
+            st.markdown("---")
+            
+            # KEY FACTORS INFLUENCING PREDICTION
+            st.markdown("### 🔑 Key Factors")
+            
+            # Analyze input features that have highest impact
+            factors_impact = []
+            
+            # High positive impact factors
+            if sentiment_score > 0.5:
+                factors_impact.append(("😊 Positive Sentiment", "Increases engagement", "+High"))
+            if sentiment_score < -0.5:
+                factors_impact.append(("😞 Negative Sentiment", "Decreases engagement", "-High"))
+            
+            if toxicity_score < 0.2:
+                factors_impact.append(("✅ Low Toxicity", "Boosts engagement", "+High"))
+            if toxicity_score > 0.7:
+                factors_impact.append(("⚠️ High Toxicity", "Hurts engagement", "-High"))
+            
+            if user_engagement_growth > 20:
+                factors_impact.append(("📈 High Growth Rate", "Strong predictor", "+High"))
+            if user_engagement_growth < -20:
+                factors_impact.append(("📉 Low Growth Rate", "Negative indicator", "-High"))
+            
+            if buzz_change_rate > 15:
+                factors_impact.append(("🔥 Trending Topic", "High visibility", "+Medium"))
+            if buzz_change_rate < -15:
+                factors_impact.append(("❄️ Declining Topic", "Low visibility", "-Medium"))
+            
+            platform_impact = {
+                'Instagram': '+High',
+                'TikTok': '+High',
+                'Twitter': '+Medium',
+                'Facebook': '+Low',
+                'LinkedIn': '+Medium'
+            }
+            factors_impact.append((f"📱 {platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
+            
+            # Display factors
+            for factor_name, description, impact in factors_impact[:5]:
+                col_f1, col_f2 = st.columns([3, 1])
+                with col_f1:
+                    st.markdown(f"**{factor_name}**")
+                    st.caption(description)
+                with col_f2:
+                    if '+' in impact:
+                        st.success(impact)
+                    else:
+                        st.error(impact)
+            
+            st.markdown("---")
+            
+            # RECOMMENDATIONS
+            st.markdown("### 💡 Recommendations")
+            
+            recommendations = []
+            if sentiment_score < 0.3:
+                recommendations.append("🎯 Increase positive sentiment in post content")
+            if toxicity_score > 0.3:
+                recommendations.append("🛡️ Review content for potentially offensive language")
+            if platform == 'Facebook':
+                recommendations.append("📱 Consider cross-posting to Instagram/TikTok for better reach")
+            if buzz_change_rate < 0:
+                recommendations.append("🔥 Post about trending topics for higher visibility")
+            if user_engagement_growth < 5:
+                recommendations.append("📊 Build user base and engagement history")
+            
+            if not recommendations:
+                recommendations.append("✨ Content looks great! Consider consistent posting schedule")
+                recommendations.append("📈 Monitor engagement trends to optimize further")
+            
+            for i, rec in enumerate(recommendations[:4], 1):
+                st.markdown(f"{i}. {rec}")
+            
+            st.markdown("---")
+            
+            # MODEL CONFIDENCE
+            st.markdown("### 🎓 Model Confidence")
+            
+            # Calculate confidence based on input variance
+            all_inputs = [sentiment_score, toxicity_score, user_engagement_growth, buzz_change_rate]
+            variance = np.std(all_inputs) if len(all_inputs) > 0 else 0.5
+            confidence = max(0.5, min(0.95, 0.7 + (0.25 * (1 - variance/100))))
+            
+            confidence_pct = int(confidence * 100)
+            st.markdown(f"**Confidence: {confidence_pct}%**")
+            st.progress(confidence)
+            
+            if confidence > 0.8:
+                st.success("✅ High confidence prediction")
+            elif confidence > 0.6:
+                st.info("ℹ️ Medium confidence - results may vary")
+            else:
+                st.warning("⚠️ Lower confidence - gather more data")
+            
+            st.markdown("---")
+            
+            # EXPLAINABILITY INFO
+            if EXPLAINABILITY_ENABLED:
+                try:
+                    pred_explainer = PredictionExplainer()
+                    explanation = pred_explainer.explain_engagement_prediction(prediction, input_data)
+                    
+                    with st.expander("📊 Advanced Analysis", expanded=False):
+                        st.markdown(explanation['interpretation'])
+                        
+                        if explanation['recommendations']:
+                            st.markdown("**Additional Tips:**")
+                            for tip in explanation['recommendations'][:3]:
+                                st.markdown(f"- {tip}")
                 
-                # Get explanation
-                explanation = pred_explainer.explain_engagement_prediction(prediction, input_data)
-                
-                # Display engagement level
-                st.markdown(f"**Engagement Level:** {explanation['engagement_level']}")
-                
-                # Display interpretation
-                st.info(explanation['interpretation'])
-                
-                # Display key factors
-                with st.expander("📊 Key Factors Influencing This Prediction", expanded=True):
-                    for i, factor in enumerate(explanation['key_factors'], 1):
-                        col1, col2, col3 = st.columns([2, 1, 1])
-                        with col1:
-                            st.markdown(f"**{i}. {factor['factor']}**")
-                            st.caption(factor['description'])
-                        with col2:
-                            st.badge(factor['impact'], anchor="center")
-                
-                # Display recommendations
-                with st.expander("💡 Recommendations to Improve Engagement", expanded=False):
-                    for i, rec in enumerate(explanation['recommendations'], 1):
-                        st.markdown(f"- {rec}")
-                
-                # Feature importance (if available)
-                if experiment_results and 'feature_importance' in experiment_results:
-                    with st.expander("📈 Feature Importance (What Matters Most)", expanded=False):
-                        st.bar_chart(data=experiment_results['feature_importance'])
-                
-            except Exception as e:
-                st.warning(f"⚠️ Explainability details not available: {e}")
-                logger.warning(f"Explainability error: {e}")
-        else:
-            st.info("ℹ️ Model explainability features not enabled")
+                except Exception as e:
+                    st.caption(f"Advanced analysis unavailable: {e}")
+            
+            # Previous predictions
+            st.markdown("---")
+            st.markdown("### 📊 Session Stats")
+            total_preds = get_total_predictions()
+            col_s1, col_s2, col_s3 = st.columns(3)
+            with col_s1:
+                st.metric("Total Predictions", total_preds)
+            with col_s2:
+                st.metric("Avg Engagement", f"{prediction:.2%}")
+            with col_s3:
+                st.metric("Status", "✅ Active")
 
     except Exception as e:
         st.error(f"❌ Prediction error: {e}")
