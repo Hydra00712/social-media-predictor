@@ -146,12 +146,7 @@ def load_model_from_azure():
             if connection_string:
                 logger.info("ðŸ” Connection string retrieved from Azure Key Vault (secure)")
 
-        # Fallback to Streamlit secrets (cloud deployment)
-        if not connection_string:
-            connection_string = st.secrets.get("AZURE_STORAGE_CONNECTION_STRING")
-            if connection_string:
-                logger.info("â˜ï¸ Connection string from Streamlit Secrets")
-        
+
         # Fallback to environment variables (development only)
         if not connection_string:
             connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
