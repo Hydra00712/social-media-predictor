@@ -425,9 +425,9 @@ with center_col:
         user_engagement_growth = st.slider("User Engagement Growth (%)", -100.0, 100.0, 0.0, 1.0)
         buzz_change_rate = st.slider("Buzz Change Rate (%)", -100.0, 100.0, 0.0, 1.0)
 
-# LEFT COLUMN - Explainability Panel
-with left_col:
-    st.header("AI Explainability Engine")
+    # Explainability Panel - inside center_col
+    st.markdown("---")
+    st.header("🤖 AI Explainability Engine")
     st.markdown("*Understand why your post will perform this way*")
     st.markdown("---")
     
@@ -436,7 +436,7 @@ with left_col:
     
     with explainability_container:
         # Show initial guide
-        st.warning("Fill the form on the right and click PREDICT to see AI explanations here!")
+        st.warning("Fill the form above and click PREDICT to see AI explanations here!")
         
         st.markdown("### What You'll See After Prediction:")
         st.markdown("""
@@ -471,104 +471,101 @@ with left_col:
             with col_m3:
                 st.metric("RMSE", f"{model_metrics['rmse']:.4f}")
 
-st.markdown("---")
+    st.markdown("---")
 
-# Predict button with better styling - centered
-st.markdown("<br>", unsafe_allow_html=True)
-col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-with col_btn2:
+    # Predict button with better styling - centered
+    st.markdown("<br>", unsafe_allow_html=True)
     predict_button = st.button("🎯 Predict Engagement Rate", type="primary", use_container_width=True)
 
-if predict_button:
-    try:
-        # Create input dataframe
-        input_data = {
-            'day_of_week': day_of_week,
-            'platform': platform,
-            'location': location,
-            'language': language,
-            'topic_category': topic_category,
-            'sentiment_score': sentiment_score,
-            'sentiment_label': sentiment_label,
-            'emotion_type': emotion_type,
-            'toxicity_score': toxicity_score,
-            'brand_name': brand_name,
-            'product_name': product_name,
-            'campaign_name': campaign_name,
-            'campaign_phase': campaign_phase,
-            'user_past_sentiment_avg': user_past_sentiment_avg,
-            'user_engagement_growth': user_engagement_growth,
-            'buzz_change_rate': buzz_change_rate
-        }
-        
-        df_input = pd.DataFrame([input_data])
-        
-        # Encode categorical variables
-        for col, encoder in label_encoders.items():
-            if col in df_input.columns:
+    if predict_button:
+        try:
+            # Create input dataframe
+            input_data = {
+                'day_of_week': day_of_week,
+                'platform': platform,
+                'location': location,
+                'language': language,
+                'topic_category': topic_category,
+                'sentiment_score': sentiment_score,
+                'sentiment_label': sentiment_label,
+                'emotion_type': emotion_type,
+                'toxicity_score': toxicity_score,
+                'brand_name': brand_name,
+                'product_name': product_name,
+                'campaign_name': campaign_name,
+                'campaign_phase': campaign_phase,
+                'user_past_sentiment_avg': user_past_sentiment_avg,
+                'user_engagement_growth': user_engagement_growth,
+                'buzz_change_rate': buzz_change_rate
+            }
+            
+            df_input = pd.DataFrame([input_data])
+            
+            # Encode categorical variables
+            for col, encoder in label_encoders.items():
+                if col in df_input.columns:
+                    try:
+                        df_input[col] = encoder.transform(df_input[col].astype(str))
+                    except:
+                        # If value not seen during training, use most common
+                        df_input[col] = 0
+            
+            # Make prediction
+            prediction = model.predict(df_input[feature_columns])[0]
+
+            # Save prediction to database (persists across refreshes)
+            save_prediction_to_db(prediction, input_data)
+
+            # Log to Azure Monitoring (Application Insights + Log Analytics + Storage Queue)
+            if MONITORING_ENABLED and azure_monitoring:
                 try:
-                    df_input[col] = encoder.transform(df_input[col].astype(str))
-                except:
-                    # If value not seen during training, use most common
-                    df_input[col] = 0
-        
-        # Make prediction
-        prediction = model.predict(df_input[feature_columns])[0]
+                    azure_monitoring.log_prediction(
+                        input_data=input_data,
+                        prediction=float(prediction),
+                        confidence=None
+                    )
+                    logger.info("Prediction logged to Azure Monitoring")
+                except Exception as e:
+                    logger.warning(f"Could not log to Azure Monitoring: {e}")
 
-        # Save prediction to database (persists across refreshes)
-        save_prediction_to_db(prediction, input_data)
+            # Log prediction
+            total_predictions = get_total_predictions()
+            logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
 
-        # Log to Azure Monitoring (Application Insights + Log Analytics + Storage Queue)
-        if MONITORING_ENABLED and azure_monitoring:
-            try:
-                azure_monitoring.log_prediction(
-                    input_data=input_data,
-                    prediction=float(prediction),
-                    confidence=None
-                )
-                logger.info("Prediction logged to Azure Monitoring")
-            except Exception as e:
-                logger.warning(f"Could not log to Azure Monitoring: {e}")
-
-        # Log prediction
-        total_predictions = get_total_predictions()
-        logger.info(f"Prediction made: {prediction:.4f} - Total predictions: {total_predictions}")
-
-        # Display result in right column with better styling
-        st.markdown("---")
-        st.success("✅ Prediction Complete!")
-
-        # Create centered result card
-        col_a, col_b, col_c = st.columns([0.5, 2, 0.5])
-        with col_b:
-            # Main prediction metric - centered
-            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-            st.metric(
-                label="📊 Predicted Engagement Rate",
-                value=f"{prediction:.2%}",
-                delta=None,
-                help="Predicted percentage of users who will engage with this post"
-            )
-            st.markdown("</div>", unsafe_allow_html=True)
-
-            # Interpretation with emojis
+            # Display result in right column with better styling
             st.markdown("---")
-            if prediction > 0.5:
-                st.success("🚀 High Engagement Expected!")
-                st.markdown("<p style='text-align: center;'>This post is likely to perform very well!</p>", unsafe_allow_html=True)
-            elif prediction > 0.3:
-                st.info("📈 Moderate Engagement Expected")
-                st.markdown("<p style='text-align: center;'>This post should get decent engagement.</p>", unsafe_allow_html=True)
-            else:
-                st.warning("⚠️ Low Engagement Expected")
-                st.markdown("<p style='text-align: center;'>Consider optimizing your content for better results.</p>", unsafe_allow_html=True)
+            st.success("✅ Prediction Complete!")
 
-            # Show prediction saved confirmation
-            st.caption(f"✓ Prediction #{total_predictions} saved to database")
+            # Create centered result card
+            col_a, col_b, col_c = st.columns([0.5, 2, 0.5])
+            with col_b:
+                # Main prediction metric - centered
+                st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+                st.metric(
+                    label="📊 Predicted Engagement Rate",
+                    value=f"{prediction:.2%}",
+                    delta=None,
+                    help="Predicted percentage of users who will engage with this post"
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
 
-        # Display results in centered column
-        # ===================================
-        with center_col:
+                # Interpretation with emojis
+                st.markdown("---")
+                if prediction > 0.5:
+                    st.success("🚀 High Engagement Expected!")
+                    st.markdown("<p style='text-align: center;'>This post is likely to perform very well!</p>", unsafe_allow_html=True)
+                elif prediction > 0.3:
+                    st.info("📈 Moderate Engagement Expected")
+                    st.markdown("<p style='text-align: center;'>This post should get decent engagement.</p>", unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Low Engagement Expected")
+                    st.markdown("<p style='text-align: center;'>Consider optimizing your content for better results.</p>", unsafe_allow_html=True)
+
+                # Show prediction saved confirmation
+                st.caption(f"✓ Prediction #{total_predictions} saved to database")
+
+            # Display results in centered column
+            # ===================================
             st.empty()  # Clear previous content
             
             # Show main prediction - centered
@@ -729,9 +726,9 @@ if predict_button:
             with col_s3:
                 st.metric("Status", "✅ Active")
 
-    except Exception as e:
-        st.error(f"Prediction error: {e}")
-        logger.error(f"Prediction error: {e}", exc_info=True)
+        except Exception as e:
+            st.error(f"Prediction error: {e}")
+            logger.error(f"Prediction error: {e}", exc_info=True)
 
 # Footer
 st.markdown("---")
