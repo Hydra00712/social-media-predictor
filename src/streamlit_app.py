@@ -23,34 +23,44 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS styling
+# Custom CSS styling for centered layout
 custom_css = """
 <style>
-    /* Center main content */
-    .main > div > div > div > div > div {
+    /* Full width centered layout */
+    .main {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    /* Center main container */
+    .stMainBlockContainer {
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 1rem 2rem;
+    }
+    
+    /* Center all headers */
+    h1, h2, h3 {
+        text-align: center !important;
         margin-left: auto;
         margin-right: auto;
     }
     
     /* Center metrics */
     [data-testid="metric-container"] {
-        display: flex;
-        justify-content: center;
+        justify-content: center !important;
     }
     
-    /* Better card styling */
+    /* Better card styling with centering */
     .prediction-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 2rem;
         border-radius: 1rem;
         color: white;
         text-align: center;
-        margin: 1rem 0;
-    }
-    
-    /* Center headers */
-    h1, h2, h3 {
-        text-align: center;
+        margin: 1rem auto;
+        max-width: 800px;
     }
     
     /* Better result boxes */
@@ -59,7 +69,8 @@ custom_css = """
         padding: 1.5rem;
         border-radius: 0.8rem;
         text-align: center;
-        margin: 1rem 0;
+        margin: 1rem auto;
+        max-width: 800px;
     }
     
     .factor-box {
@@ -67,12 +78,8 @@ custom_css = """
         padding: 1rem;
         border-radius: 0.5rem;
         text-align: center;
-        margin: 0.5rem 0;
-    }
-    
-    /* Centered column content */
-    [data-testid="column"] {
-        text-align: center;
+        margin: 0.5rem auto;
+        max-width: 700px;
     }
 </style>
 """
@@ -361,12 +368,10 @@ with st.sidebar:
     st.markdown("[GitHub Repository](https://github.com/hydra00712)")
     st.markdown("[Azure Portal](https://portal.azure.com)")
 
-# Main content - Two column layout
-# Left column for Explainability, Right column for Input Form
-left_col, right_col = st.columns([1, 2], gap="large")
+# Main content - Centered single column layout
+center_col = st.columns([1, 3, 1])[1]  # Use middle column for centering
 
-# RIGHT COLUMN - Input Form
-with right_col:
+with center_col:
     st.header("📝 Enter Post Details")
 
     # Add helpful instructions
@@ -374,7 +379,7 @@ with right_col:
         st.markdown("""
         **Step 1:** Fill in all the post details below  
         **Step 2:** Click the "🔮 Predict Engagement" button  
-        **Step 3:** View your predicted engagement rate & explainability on the left  
+        **Step 3:** View your predicted engagement rate & explainability below  
 
         **Note:** All predictions are saved to the database and persist across page refreshes!
         """)
@@ -468,7 +473,7 @@ with left_col:
 
 st.markdown("---")
 
-# Predict button with better styling
+# Predict button with better styling - centered
 st.markdown("<br>", unsafe_allow_html=True)
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
@@ -561,10 +566,9 @@ if predict_button:
             # Show prediction saved confirmation
             st.caption(f"✓ Prediction #{total_predictions} saved to database")
 
-        # ========================================
-        # UPDATE LEFT COLUMN WITH EXPLAINABILITY
-        # ========================================
-        with left_col:
+        # Display results in centered column
+        # ===================================
+        with center_col:
             st.empty()  # Clear previous content
             
             # Show main prediction - centered
