@@ -154,7 +154,7 @@ def load_model_from_azure():
         if not connection_string:
             # Fallback to local files if no Azure connection
             logger.warning("No Azure connection found. Falling back to local files")
-            st.warning("WARNING: No Azure connection found. Loading from local files...")
+            st.warning("⚠️ No Azure connection found. Loading from local files...")
             return load_model_local()
 
         logger.info("Azure connection string found")
@@ -233,12 +233,12 @@ def load_model_local():
 model, feature_columns, label_encoders, experiment_results = load_model_from_azure()
 
 if model is None:
-    st.error("ERROR: Could not load model. Please ensure model files are in the 'models' folder.")
+    st.error("❌ Could not load model. Please ensure model files are in the 'models' folder.")
     st.stop()
 
 # Sidebar - Model Info
 with st.sidebar:
-    st.header("Model Information")
+    st.header("🤖 Model Information")
     
     if experiment_results:
         st.metric("Best Model", experiment_results['best_model'])
@@ -254,32 +254,32 @@ with st.sidebar:
         st.info("Model loaded successfully")
     
     st.markdown("---")
-    st.header("EXPLAINABILITY GUIDE")
+    st.header("💡 Explainability Guide")
     st.subheader("Engagement Levels")
     st.markdown("- HIGH: > 50%")
     st.markdown("- MODERATE: 30-50%")
     st.markdown("- LOW: < 30%")
     st.markdown("---")
-    st.markdown("### Azure Monitoring")
+    st.markdown("### ☁️ Azure Monitoring")
 
     if MONITORING_ENABLED and azure_monitoring:
         try:
             stats = azure_monitoring.get_queue_stats()
             if stats:
-                st.success("CHECKMARK Monitoring Active")
+                st.success("✅ Monitoring Active")
                 st.metric("Messages in Queue", stats['message_count'])
                 st.text(f"Queue: {stats['queue_name']}")
-                st.text(f"App Insights: Active")
-                st.text(f"Log Analytics: Active")
+                st.text(f"📊 App Insights: Active")
+                st.text(f"📝 Log Analytics: Active")
             else:
-                st.warning("WARNING Queue stats unavailable")
+                st.warning("⚠️ Queue stats unavailable")
         except Exception as e:
-            st.error(f"ERROR Monitoring error: {e}")
+            st.error(f"❌ Monitoring error: {e}")
     else:
-        st.info("INFO Monitoring not configured")
+        st.info("ℹ️ Monitoring not configured")
 
     st.markdown("---")
-    st.markdown("### About")
+    st.markdown("### ℹ️ About")
     st.markdown("""
     This app uses **AI/ML** to predict social media engagement rates.
 
@@ -293,7 +293,7 @@ with st.sidebar:
     """)
 
     st.markdown("---")
-    st.markdown("### Links")
+    st.markdown("### 🔗 Links")
     st.markdown("[GitHub Repository](https://github.com/hydra00712)")
     st.markdown("[Azure Portal](https://portal.azure.com)")
 
@@ -408,10 +408,7 @@ st.markdown("---")
 st.markdown("<br>", unsafe_allow_html=True)
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    predict_button = st.button("Predict Engagement Rate", type="primary", use_container_width=True)
-
-if predict_button:
-    try:
+    predict_button = st.button("🎯 Predict Engagement Rate", type="primary", use_container_width=True)
         # Create input dataframe
         input_data = {
             'day_of_week': day_of_week,
@@ -467,7 +464,7 @@ if predict_button:
 
         # Display result in right column with better styling
         st.markdown("---")
-        st.success("Prediction Complete!")
+        st.success("✅ Prediction Complete!")
 
         # Create a nice result card
         col_a, col_b, col_c = st.columns([1, 2, 1])
@@ -483,13 +480,13 @@ if predict_button:
             # Interpretation with emojis
             st.markdown("---")
             if prediction > 0.5:
-                st.success("High Engagement Expected!")
+                st.success("🚀 High Engagement Expected!")
                 st.markdown("This post is likely to perform very well!")
             elif prediction > 0.3:
-                st.info("Moderate Engagement Expected")
+                st.info("📈 Moderate Engagement Expected")
                 st.markdown("This post should get decent engagement.")
             else:
-                st.warning("Low Engagement Expected")
+                st.warning("⚠️ Low Engagement Expected")
                 st.markdown("Consider optimizing your content for better results.")
 
             # Show prediction saved confirmation
@@ -502,7 +499,7 @@ if predict_button:
             st.empty()  # Clear previous content
             
             # Show main prediction
-            st.success(f"PREDICTION RESULT: {prediction:.2%}")
+            st.success(f"🎯 Prediction Result: {prediction:.2%}")
             st.markdown("---")
             
             # Determine engagement level
@@ -519,13 +516,13 @@ if predict_button:
                 level_color = "orange"
                 level_emoji = "LOW"
             
-            st.markdown(f"### Engagement Level Prediction")
+            st.markdown(f"### 📊 Engagement Level")
             st.markdown(engagement_level)
             st.progress(prediction)
             st.markdown("---")
             
             # KEY FACTORS INFLUENCING PREDICTION
-            st.markdown("### Key Factors")
+            st.markdown("### 🔑 Key Factors")
             
             # Analyze input features that have highest impact
             factors_impact = []
@@ -575,7 +572,7 @@ if predict_button:
             st.markdown("---")
             
             # RECOMMENDATIONS
-            st.markdown("### Recommendations")
+            st.markdown("### 💬 Recommendations")
             
             recommendations = []
             if sentiment_score < 0.3:
@@ -599,7 +596,7 @@ if predict_button:
             st.markdown("---")
             
             # MODEL CONFIDENCE
-            st.markdown("### Model Confidence")
+            st.markdown("### 📈 Model Confidence")
             
             # Calculate confidence based on input variance
             all_inputs = [sentiment_score, toxicity_score, user_engagement_growth, buzz_change_rate]
@@ -611,11 +608,11 @@ if predict_button:
             st.progress(confidence)
             
             if confidence > 0.8:
-                st.success("High confidence prediction")
+                st.success("✅ High confidence prediction")
             elif confidence > 0.6:
-                st.info("Medium confidence - results may vary")
+                st.info("⚠️ Medium confidence - results may vary")
             else:
-                st.warning("Lower confidence - gather more data")
+                st.warning("📊 Lower confidence - gather more data")
             
             st.markdown("---")
             
@@ -638,7 +635,7 @@ if predict_button:
             
             # Previous predictions
             st.markdown("---")
-            st.markdown("### Session Stats")
+            st.markdown("### 📊 Session Stats")
             total_preds = get_total_predictions()
             col_s1, col_s2, col_s3 = st.columns(3)
             with col_s1:
@@ -646,7 +643,7 @@ if predict_button:
             with col_s2:
                 st.metric("Avg Engagement", f"{prediction:.2%}")
             with col_s3:
-                st.metric("Status", "Active")
+                st.metric("Status", "✅ Active")
 
     except Exception as e:
         st.error(f"Prediction error: {e}")
@@ -654,7 +651,7 @@ if predict_button:
 
 # Footer
 st.markdown("---")
-st.markdown("### Tips for Better Engagement")
+st.markdown("### 💡 Tips for Better Engagement")
 st.markdown("""
 - **Positive sentiment** generally leads to higher engagement
 - **Low toxicity** is crucial for good engagement
@@ -664,7 +661,7 @@ st.markdown("""
 
 # Monitoring & Analytics Section
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Monitoring & Analytics")
+st.sidebar.markdown("### 📊 Monitoring & Analytics")
 
 # Session metrics - Load from database
 if 'start_time' not in st.session_state:
@@ -679,23 +676,23 @@ uptime_minutes = uptime.seconds // 60
 
 col1, col2 = st.sidebar.columns(2)
 with col1:
-    st.metric("Predictions", total_predictions, help="Total predictions made (persists across refreshes")
+    st.metric("🎯 Predictions", total_predictions, help="Total predictions made (persists across refreshes")
 with col2:
-    st.metric("Uptime", f"{uptime_minutes} min", help="Current session uptime")
+    st.metric("⏱️ Uptime", f"{uptime_minutes} min", help="Current session uptime")
 
-st.sidebar.metric("Model Status", "Active", help="Model is loaded and ready")
+st.sidebar.metric("🤖 Model Status", "✅ Active", help="Model is loaded and ready")
 
 # Security and Streaming Status
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Security & Streaming")
+st.sidebar.markdown("### 🔒 Security & Streaming")
 
 if SECURITY_ENABLED:
     if key_vault and key_vault.client:
-        st.sidebar.success("Key Vault: Connected")
+        st.sidebar.success("🔐 Key Vault: Connected")
     else:
-        st.sidebar.info("Key Vault: Fallback mode (using .env)")
+        st.sidebar.info("🔑 Key Vault: Fallback mode (using .env)")
 else:
-    st.sidebar.info("Security: Using environment variables")
+    st.sidebar.info("🔒 Security: Using environment variables")
 
 # Add a progress indicator
 if total_predictions > 0:
@@ -707,9 +704,9 @@ logger.info(f"Session metrics - Total Predictions: {total_predictions}, Uptime: 
 
 # Footer in sidebar
 st.sidebar.markdown("---")
-st.sidebar.markdown("### Academic Project")
-st.sidebar.caption("Cloud Computing Course")
-st.sidebar.caption("Machine Learning Pipeline")
-st.sidebar.caption("© 2025")
+st.sidebar.markdown("### 🎓 Academic Project")
+st.sidebar.caption("☁️ Cloud Computing Course")
+st.sidebar.caption("🤖 Machine Learning Pipeline")
+st.sidebar.caption("© 2025-2026")
 
 
