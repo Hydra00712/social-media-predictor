@@ -27,7 +27,7 @@ try:
     from azure_monitoring import AzureMonitoring
     azure_monitoring = AzureMonitoring()
     MONITORING_ENABLED = True
-    logger.info("âœ… Azure Monitoring initialized")
+    logger.info("OK: Azure Monitoring initialized")
 except ImportError as e:
     MONITORING_ENABLED = False
     azure_monitoring = None
@@ -37,7 +37,7 @@ except ImportError as e:
 try:
     from model_explainability import ModelExplainer, PredictionExplainer
     EXPLAINABILITY_ENABLED = True
-    logger.info("âœ… Model Explainability initialized")
+    logger.info("OK: Model Explainability initialized")
 except ImportError as e:
     EXPLAINABILITY_ENABLED = False
     logger.warning(f"Model Explainability not available: {e}")
@@ -47,11 +47,11 @@ try:
     from key_vault_setup import KeyVaultManager
     key_vault = KeyVaultManager()
     SECURITY_ENABLED = True if key_vault.client else False
-    logger.info("âœ… Azure Key Vault integration ready")
+    logger.info("OK: Azure Key Vault integration ready")
 except Exception as e:
     SECURITY_ENABLED = False
     key_vault = None
-    logger.info("â„¹ï¸  Key Vault not available - using environment variables")
+    logger.info("INFO: Key Vault not available - using environment variables")
 
 # Database helper functions
 def get_db_connection():
@@ -108,7 +108,7 @@ def save_prediction_to_db(prediction_value, input_data):
 # Page config
 st.set_page_config(
     page_title="Social Media Engagement Predictor",
-    page_icon="ðŸ“±",
+    page_icon="📱",
     layout="wide"
 )
 
@@ -116,12 +116,12 @@ st.set_page_config(
 logger.info("Streamlit app started")
 
 # Title with better styling
-st.title("ðŸ“± Social Media Engagement Predictor")
-st.markdown("### ðŸŽ¯ Predict engagement rate for your social media posts using AI")
+st.title("Social Media Engagement Predictor")
+st.markdown("### Predict engagement rate for your social media posts using AI")
 st.markdown("*Powered by Azure ML, MLflow, and HistGradientBoosting Algorithm*")
 
 # Add a nice info banner
-st.info("ðŸ‘‹ **Welcome!** This AI-powered tool predicts how well your social media posts will perform before you publish them. Fill in the details below to get started!")
+st.info("Welcome! This AI-powered tool predicts how well your social media posts will perform before you publish them. Fill in the details below to get started!")
 
 st.markdown("---")
 
@@ -154,7 +154,7 @@ def load_model_from_azure():
         if not connection_string:
             # Fallback to local files if no Azure connection
             logger.warning("No Azure connection found. Falling back to local files")
-            st.warning("âš ï¸ No Azure connection found. Loading from local files...")
+            st.warning("WARNING: No Azure connection found. Loading from local files...")
             return load_model_local()
 
         logger.info("Azure connection string found")
@@ -233,23 +233,23 @@ def load_model_local():
 model, feature_columns, label_encoders, experiment_results = load_model_from_azure()
 
 if model is None:
-    st.error("âŒ Could not load model. Please ensure model files are in the 'models' folder.")
+    st.error("ERROR: Could not load model. Please ensure model files are in the 'models' folder.")
     st.stop()
 
 # Sidebar - Model Info
 with st.sidebar:
-    st.header("ðŸ“Š Model Information")
+    st.header("Model Information")
     
     if experiment_results:
         st.metric("Best Model", experiment_results['best_model'])
-        st.metric("RÂ² Score", f"{experiment_results['metrics'][experiment_results['best_model']]['r2']:.4f}")
+        st.metric("R-Squared Score", f"{experiment_results['metrics'][experiment_results['best_model']]['r2']:.4f}")
         st.metric("MAE", f"{experiment_results['metrics'][experiment_results['best_model']]['mae']:.4f}")
         st.metric("RMSE", f"{experiment_results['metrics'][experiment_results['best_model']]['rmse']:.4f}")
         
         st.markdown("---")
         st.markdown("### Models Compared")
         for model_name in experiment_results['models_compared']:
-            st.text(f"âœ“ {model_name}")
+            st.text(f"• {model_name}")
     else:
         st.info("Model loaded successfully")
     
@@ -303,13 +303,13 @@ left_col, right_col = st.columns([1, 2], gap="large")
 
 # RIGHT COLUMN - Input Form
 with right_col:
-    st.header("ðŸ“ Enter Post Details")
+    st.header("Enter Post Details")
 
     # Add helpful instructions
-    with st.expander("â„¹ï¸ How to use this app", expanded=False):
+    with st.expander("How to use this app", expanded=False):
         st.markdown("""
         **Step 1:** Fill in all the post details below
-        **Step 2:** Click the "ðŸŽ¯ Predict Engagement" button
+        **Step 2:** Click the "Predict Engagement" button
         **Step 3:** View your predicted engagement rate & explainability on the left
 
         **Note:** All predictions are saved to the database and persist across page refreshes!
@@ -358,7 +358,7 @@ with right_col:
 
 # LEFT COLUMN - Explainability Panel
 with left_col:
-    st.header("ðŸ” AI Explainability Engine")
+    st.header("AI Explainability Engine")
     st.markdown("*Understand why your post will perform this way*")
     st.markdown("---")
     
@@ -367,32 +367,32 @@ with left_col:
     
     with explainability_container:
         # Show initial guide
-        st.warning("ðŸ‘ˆ **Fill the form on the right and click PREDICT to see AI explanations here!**")
+        st.warning("Fill the form on the right and click PREDICT to see AI explanations here!")
         
         st.markdown("### What You'll See After Prediction:")
         st.markdown("""
-        âœ… **Engagement Score** - 0% to 100% prediction
+        • **Engagement Score** - 0% to 100% prediction
         
-        âœ… **Engagement Level** - High/Moderate/Low classification
+        • **Engagement Level** - High/Moderate/Low classification
         
-        âœ… **Key Factors** - What influences this specific prediction
-        - Sentiment impact ðŸ˜Š
-        - Toxicity analysis ðŸ›¡ï¸
-        - Growth trends ðŸ“ˆ
-        - Topic buzz ðŸ”¥
-        - Platform analysis ðŸ“±
+        • **Key Factors** - What influences this specific prediction
+        - Sentiment impact
+        - Toxicity analysis
+        - Growth trends
+        - Topic buzz
+        - Platform analysis
         
-        âœ… **Recommendations** - Actionable tips to improve
+        • **Recommendations** - Actionable tips to improve
         
-        âœ… **Model Confidence** - How certain is the AI (%)
+        • **Model Confidence** - How certain is the AI (%)
         
-        âœ… **Advanced Analysis** - Deep SHAP/LIME explanations
+        • **Advanced Analysis** - Deep SHAP/LIME explanations
         """)
         
         # Show feature correlations
         if experiment_results and 'metrics' in experiment_results:
             st.markdown("---")
-            st.markdown("### ðŸ“Š Model Performance")
+            st.markdown("### Model Performance")
             model_metrics = experiment_results['metrics'][experiment_results['best_model']]
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
