@@ -267,40 +267,40 @@ with st.sidebar:
     st.markdown("- MODERATE: 30-50%")
     st.markdown("- LOW: < 30%")
     st.markdown("---")
-    st.markdown("### ï¿½ðŸ“Š Azure Monitoring")
+    st.markdown("### Azure Monitoring")
 
     if MONITORING_ENABLED and azure_monitoring:
         try:
             stats = azure_monitoring.get_queue_stats()
             if stats:
-                st.success("âœ… Monitoring Active")
+                st.success("CHECKMARK Monitoring Active")
                 st.metric("Messages in Queue", stats['message_count'])
-                st.text(f"ðŸ“¡ Queue: {stats['queue_name']}")
-                st.text(f"ðŸ“Š App Insights: Active")
-                st.text(f"ðŸ“Š Log Analytics: Active")
+                st.text(f"Queue: {stats['queue_name']}")
+                st.text(f"App Insights: Active")
+                st.text(f"Log Analytics: Active")
             else:
-                st.warning("âš ï¸ Queue stats unavailable")
+                st.warning("WARNING Queue stats unavailable")
         except Exception as e:
-            st.error(f"âŒ Monitoring error: {e}")
+            st.error(f"ERROR Monitoring error: {e}")
     else:
-        st.info("â„¹ï¸ Monitoring not configured")
+        st.info("INFO Monitoring not configured")
 
     st.markdown("---")
-    st.markdown("### ðŸ’¡ About")
+    st.markdown("### About")
     st.markdown("""
     This app uses **AI/ML** to predict social media engagement rates.
 
     **Features:**
-    - ðŸ¤– HistGradientBoosting Algorithm
-    - â˜ï¸ Azure Blob Storage
-    - ðŸ“Š Application Insights (FREE)
-    - ðŸ“Š Log Analytics (FREE)
-    - ðŸ“¡ Storage Queue Streaming (FREE)
-    - ðŸ—„ï¸ SQLite Database
+    - HistGradientBoosting Algorithm
+    - Azure Blob Storage
+    - Application Insights (FREE)
+    - Log Analytics (FREE)
+    - Storage Queue Streaming (FREE)
+    - SQLite Database
     """)
 
     st.markdown("---")
-    st.markdown("### ðŸ”— Links")
+    st.markdown("### Links")
     st.markdown("[GitHub Repository](https://github.com/hydra00712)")
     st.markdown("[Azure Portal](https://portal.azure.com)")
 
