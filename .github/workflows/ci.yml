@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING || 'UseDevelopmentStorage=true' }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No requirements.txt found; skipping installs"
+          fi
+
+      - name: Verify minimal tooling
+        run: |
+          python -V
+          pip -V
+          git --version
+
+      - name: Syntax check (compileall)
+        run: |
+          python -m compileall .
+
+      - name: Smoke imports (non-blocking)
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ env.AZURE_STORAGE_CONNECTION_STRING }}
+        run: |
+          python - <<'PY'
+          import importlib
+          modules = [
+              "streamlit_app",
+              "azure_monitoring",
+              "azure_config",
+              "table_storage_manager",
+              "predict_engagement",
+          ]
+          for mod in modules:
+              try:
+                  importlib.import_module(mod)
+                  print(f"OK: {mod}")
+              except ModuleNotFoundError as exc:
+                  print(f"SKIP: {mod} ({exc})")
+              except Exception as exc:
+                  print(f"WARN: {mod} ({exc})")
+          PY
+
+      - name: Tests (if present)
+        run: |
+          if [ -d tests ]; then
+            pytest -q
+          else
+            echo "No tests directory; skipping"
+          fi
+
+      - name: Build and archive artifact
+        run: |
+          set -e
+          mkdir -p dist
+          if [ -f pyproject.toml ] || [ -f setup.py ]; then
+            python -m pip install --upgrade build
+            python -m build
+            cp dist/* dist/ 2>/dev/null || true
+          fi
+          tar -czf dist/project.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.run_number }}
+          path: dist/
+          retention-days: 5

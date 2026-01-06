@@ -7,16 +7,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY streamlit_app.py .
-COPY azure_config.py .
-COPY azure_monitoring.py .
-COPY table_storage_manager.py .
-COPY key_vault_setup.py .
-COPY model_explainability.py .
-COPY models/ models/
-COPY cleaned_data/ cleaned_data/
-COPY database/ database/
+# Copy application files from src/
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+COPY models/ ./models/
+COPY cleaned_data/ ./cleaned_data/
+COPY database/ ./database/
 
 # Create database directory
 RUN mkdir -p database
@@ -29,4 +25,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Run Streamlit
-CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+CMD ["streamlit", "run", "src/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]

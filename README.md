@@ -1,243 +1,115 @@
 # Social Media Engagement Predictor
 
-**Predict social media engagement with AI/ML on Azure** — built with Python, scikit-learn, Streamlit, and Azure cloud services (free tier).
+Production-ready ML application for predicting social media engagement rates.
 
-### Core Features
-- 🤖 **ML Model** — HistGradientBoosting classifier predicting engagement levels
-- 📊 **Data Balancing** — SMOTE/ADASYN handling class imbalance
-- 🔍 **Explainability** — Feature importance + prediction explanations (SHAP/LIME)
-- 📈 **Monitoring** — Azure App Insights + Log Analytics + live dashboard
-- 🎨 **UI** — Streamlit web app for predictions & analytics
-- ☁️ **Cloud Ready** — Fully integrated with Azure Storage, monitoring, & Key Vault
-
----
-
-## Quick Start
-
-### 1. Install dependencies
-```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1  # Windows
-source .venv/bin/activate   # macOS/Linux
-pip install -r requirements.txt
-```
-
-### 2. Configure Azure connection (optional)
-Create `.env` file:
-```env
-AZURE_STORAGE_CONNECTION_STRING=<your_storage_connection_string>
-```
-*Without this, the app uses local models in `models/`*
-
-### 3. Run the app
-```bash
-streamlit run streamlit_app.py
-```
-Opens at `http://localhost:8501`
-
----
-
-## Architecture
+## 📁 Project Structure
 
 ```
-┌─────────────────┐
-│  Streamlit App  │
-│   (UI + Pred)   │
-└────────┬────────┘
-         │
-    ┌────┴──────────┬──────────┬──────────┐
-    │               │          │          │
-┌───▼─────┐  ┌─────▼──┐  ┌──▼─────┐  ┌─▼──────┐
-│  Model  │  │Monitor │  │ Azure  │  │ Data   │
-│  Files  │  │ & Log  │  │Storage │  │Balance │
-└────────┘  └────────┘  └────────┘  └────────┘
-```
-
-**Data Flow:**
-1. User inputs → Streamlit form
-2. Data balancing/validation
-3. Model prediction (HistGradientBoosting)
-4. Feature importance + explanations
-5. Azure monitoring (App Insights, Log Analytics)
-6. Results displayed in UI
-
----
-
-## Project Structure
-
-```
-├── streamlit_app.py              # Main UI application
-├── azure_monitoring.py           # Monitoring & logging
-├── azure_config.py               # Azure configuration
-├── model_explainability.py       # SHAP/LIME explanations
-├── data_balancing.py             # SMOTE/ADASYN balancing
-├── monitoring_dashboard.py       # Performance tracking
-├── requirements.txt              # Python dependencies
-├── .env                          # Azure credentials (ignored)
+CL/
+├── 📚 docs/                      # Documentation
+│   ├── README.md                 # Project overview
+│   ├── COMPLETE_GUIDE.md         # Setup and deployment guide
+│   ├── PROJECT_SUMMARY_FULL.md   # Detailed project summary
+│   └── SECURITY_DOCUMENTATION.md # Security best practices
 │
-├── models/
-│   ├── engagement_model.pkl      # Trained ML model
-│   ├── feature_columns.pkl       # Feature list
-│   ├── label_encoders.pkl        # Encoder mappings
-│   └── experiment_results.json   # Model metrics
+├── 💻 src/                       # Application source code
+│   ├── streamlit_app.py          # Main Streamlit web app
+│   ├── azure_monitoring.py       # Application Insights integration
+│   ├── azure_config.py           # Azure configuration helper
+│   └── table_storage_manager.py  # Azure Table Storage operations
 │
-├── database/
-│   └── social_media.db           # SQLite cache
+├── 🔧 scripts/                   # Utility scripts
+│   ├── data_balancing.py         # SMOTE/ADASYN data preprocessing
+│   ├── generate_predictions.py   # Batch prediction generator
+│   └── key_vault_setup.py        # Azure Key Vault setup
 │
-├── cleaned_data/
-│   └── social_media_cleaned.csv  # Training dataset
+├── 📓 notebooks/                 # Jupyter notebooks
+│   └── AZURE_ML_WORKSPACE.ipynb  # Azure ML workspace integration
 │
-├── README.md                      # This file
-├── PROJECT_SUMMARY.md            # Presentation guide
-├── COMPLETION_CHECKLIST.md       # Feature checklist
-└── PROJECT_ARCHITECTURE.md       # Technical details
+├── 📊 data/                      # Data files
+│   ├── cleaned_data/             # Training dataset (12,000 posts)
+│   ├── predictions/              # Prediction outputs
+│   └── database/                 # SQLite database
+│
+├── 🤖 models/                    # Trained ML models
+│   ├── engagement_model.pkl      # HistGradientBoostingRegressor
+│   ├── feature_columns.pkl       # Feature names
+│   ├── label_encoders.pkl        # Categorical encoders
+│   └── experiment_results.json   # Model comparison results
+│
+├── 📈 mlruns/                    # MLflow experiment artifacts
+├── 🗄️ mlflow.db                  # MLflow tracking database
+│
+├── ☁️ azure_functions_project/   # Azure Functions code
+│   ├── ProcessDataHTTP/          # Data processing function
+│   ├── host.json                 # Function app configuration
+│   └── requirements.txt          # Function dependencies
+│
+├── 🚀 .github/workflows/         # GitHub Actions CI/CD
+│   ├── ci.yml                    # Continuous Integration
+│   ├── aca-deploy.yml            # Azure Container Apps deployment
+│   ├── ci-basic.yml              # Basic syntax checks
+│   └── deploy.yml                # Deployment workflows
+│
+├── ⚙️ Configuration Files
+│   ├── .env                      # Environment variables (secrets)
+│   ├── .gitignore                # Git ignore patterns
+│   ├── azure-pipelines.yml       # Azure DevOps pipeline
+│   ├── azure_config.json         # Azure service configuration
+│   ├── Dockerfile                # Container build configuration
+│   └── requirements.txt          # Python dependencies
+│
+└── 🔧 Development
+    ├── .venv/                    # Python virtual environment
+    └── .streamlit/               # Streamlit configuration
 ```
 
----
+## 🚀 Quick Start
 
-## Azure Resources (Free Tier)
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-| Resource | Type | Status |
-|----------|------|--------|
-| Storage Account | `stsocialmediajkvqol` | ✅ Active |
-| App Insights | `mlwsociainsightsf7431d22` | ✅ Active |
-| Log Analytics | `mlwsocialogalytjea9b61fd` | ✅ Active |
-| Storage Queue | `predictions-queue` | ✅ Active |
-| Key Vault | `kv-social-ml-7487` | ✅ Configured |
+2. **Run locally:**
+   ```bash
+   streamlit run src/streamlit_app.py
+   ```
 
-**Cost:** 100% free tier — no charges for development/testing.
+3. **Access the app:**
+   Open http://localhost:8501
 
----
+## ☁️ Azure Deployment
 
-## Model Performance
+- **Container App:** https://social-ml-app.gentleglacier-5e8a21de.francecentral.azurecontainerapps.io
+- **Resource Group:** rg-social-media-ml
+- **Region:** France Central
 
-Tested on 3 algorithms. **Best:** HistGradientBoosting
-- **R² Score:** -0.041 (high variance in engagement)
-- **MAE:** 0.36 engagement level
-- **RMSE:** 1.15 engagement level
+## 📖 Documentation
 
----
+- See [docs/README.md](docs/README.md) for detailed project overview
+- See [docs/COMPLETE_GUIDE.md](docs/COMPLETE_GUIDE.md) for setup instructions
+- See [docs/SECURITY_DOCUMENTATION.md](docs/SECURITY_DOCUMENTATION.md) for security details
 
-## Features
+## 🧪 Model Performance
 
-### 1. Data Balancing
-- Detects class imbalance in dataset
-- Applies SMOTE (synthetic oversampling) or ADASYN
-- Ensures fair model training
+- **Algorithm:** HistGradientBoostingRegressor
+- **R² Score:** -0.0410
+- **MAE:** 0.3613
+- **RMSE:** 1.1469
+- **Dataset:** 12,000 social media posts (22 features)
 
-### 2. Model Explainability
-- Feature importance ranking
-- Per-prediction explanations
-- Rule-based engagement recommendations
-- Shows which factors drive predictions
+## 🔐 Environment Variables
 
-### 3. Monitoring & Alerts
-- Live prediction stats (last 24h)
-- Data quality checks
-- System uptime tracking
-- Automatic alerts on thresholds
+Required in `.env`:
+- `AZURE_STORAGE_CONNECTION_STRING`
+- `APPLICATIONINSIGHTS_CONNECTION_STRING`
+- `AZURE_EVENTHUB_CONNECTION_STRING`
+- `APPINSIGHTS_INSTRUMENTATION_KEY`
 
-### 4. Streamlit UI
-- Real-time prediction form
-- Engagement level output (0-5 scale)
-- Feature importance visualization
-- Model health dashboard
+## 🛠️ Development
 
----
-
-## How Grading Criteria Are Met
-
-✅ **Data Ingestion & Storage**
-  - CSV dataset in `cleaned_data/`
-  - Azure Blob Storage containers
-  - Storage Queue for async processing
-
-✅ **Data Processing**
-  - Cleaned & preprocessed dataset
-  - Feature scaling & encoding
-
-✅ **Streaming** (Optional)
-  - Storage Queue implementation
-  - Real-time prediction logging
-
-✅ **Data Balancing**
-  - SMOTE & ADASYN algorithms
-  - Stratified train/test split
-
-✅ **Model Training**
-  - RandomForest, HistGradientBoosting, ExtraTrees tested
-  - Hyperparameter tuning
-  - Cross-validation
-
-✅ **Experiment Tracking**
-  - `experiment_results.json` with metrics
-  - ML workspace integration
-
-✅ **Deployment & Inference**
-  - Streamlit web app
-  - Local + cloud model loading
-
-✅ **Monitoring & Alerts**
-  - App Insights + Log Analytics
-  - Custom alert thresholds
-  - Health score tracking
-
-✅ **Security**
-  - Key Vault for credentials
-  - Environment variables in `.env`
-  - Secrets redaction in logs
-
-✅ **Explainability**
-  - Feature importance analysis
-  - SHAP/LIME integration
-  - Human-readable explanations
-
----
-
-## Dependencies
-
-Core:
-- `scikit-learn` — ML algorithms
-- `pandas` — Data processing
-- `numpy` — Numerical computing
-- `streamlit` — Web UI
-
-Advanced:
-- `shap` — Model explanations
-- `lime` — Local interpretability
-- `imbalanced-learn` — Data balancing
-- `azure-*` — Azure SDK clients
-
-See `requirements.txt` for full list.
-- Avg Engagement by Platform (bar) — `platform` vs avg `engagement_rate`.
-- Avg Engagement by Topic Category (treemap) — `topic_category` vs avg `engagement_rate`.
-- Engagement Trend by Campaign Phase (line/area) — `campaign_phase` vs avg `engagement_rate`.
-- Engagement Rate Distribution (histogram) — bins of `engagement_rate`.
-- Details table — brand_name, product_name, topic_category, platform, sentiment_label, engagement_rate.
-- Slicers — platform; topic_category or sentiment_label.
-
----
-
-## Running with monitoring (still free)
-- Set `AZURE_STORAGE_CONNECTION_STRING` (from Key Vault or portal). Leave Event Hub unset to avoid charges.
-- `azure_monitoring.py` uses Application Insights + Storage Queue; no paid services required.
-- If you need alerts, create them in App Insights/Log Analytics; free tier covers basic alerts.
-
----
-
-## Minimal file map (current)
-- streamlit_app.py — UI + inference; falls back to local models if Azure unavailable.
-- predict_engagement.py — feature prep + prediction.
-- azure_config.{py,json} — resource names; secrets are placeholders.
-- azure_monitoring.py — telemetry to App Insights + Storage Queue.
-- cleaned_data/social_media_cleaned.csv — dataset for Power BI.
-- models/ — engagement_model.pkl, feature_columns.pkl, label_encoders.pkl, experiment_results.json.
-- database/ — SQLite used by the app (created on first run).
-- requirements.txt — dependencies.
-
----
-
-## Cost notes
-- Using only Storage + App Insights + Log Analytics free tiers is $0.
-- Event Hub is the only notable cost; it is unused by default. If you keep it, disable its use in any deployment configs.
-
+- Python 3.11
+- MLflow for experiment tracking
+- Docker for containerization
+- GitHub Actions & Azure DevOps for CI/CD

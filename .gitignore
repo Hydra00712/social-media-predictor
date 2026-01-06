@@ -36,6 +36,7 @@ data/
 # MLflow
 mlruns/
 mlartifacts/
+mlflow.db
 
 # Azure Functions
 local.settings.json
