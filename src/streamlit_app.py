@@ -396,7 +396,7 @@ with left_col:
             model_metrics = experiment_results['metrics'][experiment_results['best_model']]
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
-                st.metric("RÂ² Score", f"{model_metrics['r2']:.4f}")
+                st.metric("R-Squared Score", f"{model_metrics['r2']:.4f}")
             with col_m2:
                 st.metric("MAE", f"{model_metrics['mae']:.4f}")
             with col_m3:
@@ -408,7 +408,7 @@ st.markdown("---")
 st.markdown("<br>", unsafe_allow_html=True)
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    predict_button = st.button("ðŸŽ¯ Predict Engagement Rate", type="primary", use_container_width=True)
+    predict_button = st.button("Predict Engagement Rate", type="primary", use_container_width=True)
 
 if predict_button:
     try:
@@ -457,7 +457,7 @@ if predict_button:
                     prediction=float(prediction),
                     confidence=None
                 )
-                logger.info("ðŸ“Š Prediction logged to Azure Monitoring")
+                logger.info("Prediction logged to Azure Monitoring")
             except Exception as e:
                 logger.warning(f"Could not log to Azure Monitoring: {e}")
 
@@ -467,14 +467,14 @@ if predict_button:
 
         # Display result in right column with better styling
         st.markdown("---")
-        st.success("âœ… **Prediction Complete!**")
+        st.success("Prediction Complete!")
 
         # Create a nice result card
         col_a, col_b, col_c = st.columns([1, 2, 1])
         with col_b:
             # Main prediction metric
             st.metric(
-                label="ðŸŽ¯ Predicted Engagement Rate",
+                label="Predicted Engagement Rate",
                 value=f"{prediction:.2%}",
                 delta=None,
                 help="Predicted percentage of users who will engage with this post"
@@ -483,17 +483,17 @@ if predict_button:
             # Interpretation with emojis
             st.markdown("---")
             if prediction > 0.5:
-                st.success("ðŸ”¥ **High Engagement Expected!**")
+                st.success("High Engagement Expected!")
                 st.markdown("This post is likely to perform very well!")
             elif prediction > 0.3:
-                st.info("ðŸ“Š **Moderate Engagement Expected**")
+                st.info("Moderate Engagement Expected")
                 st.markdown("This post should get decent engagement.")
             else:
-                st.warning("ðŸ“‰ **Low Engagement Expected**")
+                st.warning("Low Engagement Expected")
                 st.markdown("Consider optimizing your content for better results.")
 
             # Show prediction saved confirmation
-            st.caption(f"âœ… Prediction #{total_predictions} saved to database")
+            st.caption(f"Prediction #{total_predictions} saved to database")
 
         # ========================================
         # UPDATE LEFT COLUMN WITH EXPLAINABILITY
@@ -502,54 +502,54 @@ if predict_button:
             st.empty()  # Clear previous content
             
             # Show main prediction
-            st.success(f"ðŸŽ¯ **PREDICTION RESULT: {prediction:.2%}**")
+            st.success(f"PREDICTION RESULT: {prediction:.2%}")
             st.markdown("---")
             
             # Determine engagement level
             if prediction > 0.5:
-                engagement_level = "ðŸ”¥ **HIGH ENGAGEMENT**"
+                engagement_level = "HIGH ENGAGEMENT"
                 level_color = "green"
-                level_emoji = "ðŸ”¥"
+                level_emoji = "HIGH"
             elif prediction > 0.3:
-                engagement_level = "ðŸ“Š **MODERATE ENGAGEMENT**"
+                engagement_level = "MODERATE ENGAGEMENT"
                 level_color = "blue"
-                level_emoji = "ðŸ“Š"
+                level_emoji = "MODERATE"
             else:
-                engagement_level = "ðŸ“‰ **LOW ENGAGEMENT**"
+                engagement_level = "LOW ENGAGEMENT"
                 level_color = "orange"
-                level_emoji = "ðŸ“‰"
+                level_emoji = "LOW"
             
-            st.markdown(f"### {level_emoji} Engagement Level Prediction")
+            st.markdown(f"### Engagement Level Prediction")
             st.markdown(engagement_level)
             st.progress(prediction)
             st.markdown("---")
             
             # KEY FACTORS INFLUENCING PREDICTION
-            st.markdown("### ðŸ”‘ Key Factors")
+            st.markdown("### Key Factors")
             
             # Analyze input features that have highest impact
             factors_impact = []
             
             # High positive impact factors
             if sentiment_score > 0.5:
-                factors_impact.append(("ðŸ˜Š Positive Sentiment", "Increases engagement", "+High"))
+                factors_impact.append(("Positive Sentiment", "Increases engagement", "+High"))
             if sentiment_score < -0.5:
-                factors_impact.append(("ðŸ˜ž Negative Sentiment", "Decreases engagement", "-High"))
+                factors_impact.append(("Negative Sentiment", "Decreases engagement", "-High"))
             
             if toxicity_score < 0.2:
-                factors_impact.append(("âœ… Low Toxicity", "Boosts engagement", "+High"))
+                factors_impact.append(("Low Toxicity", "Boosts engagement", "+High"))
             if toxicity_score > 0.7:
-                factors_impact.append(("âš ï¸ High Toxicity", "Hurts engagement", "-High"))
+                factors_impact.append(("High Toxicity", "Hurts engagement", "-High"))
             
             if user_engagement_growth > 20:
-                factors_impact.append(("ðŸ“ˆ High Growth Rate", "Strong predictor", "+High"))
+                factors_impact.append(("High Growth Rate", "Strong predictor", "+High"))
             if user_engagement_growth < -20:
-                factors_impact.append(("ðŸ“‰ Low Growth Rate", "Negative indicator", "-High"))
+                factors_impact.append(("Low Growth Rate", "Negative indicator", "-High"))
             
             if buzz_change_rate > 15:
-                factors_impact.append(("ðŸ”¥ Trending Topic", "High visibility", "+Medium"))
+                factors_impact.append(("Trending Topic", "High visibility", "+Medium"))
             if buzz_change_rate < -15:
-                factors_impact.append(("â„ï¸ Declining Topic", "Low visibility", "-Medium"))
+                factors_impact.append(("Declining Topic", "Low visibility", "-Medium"))
             
             platform_impact = {
                 'Instagram': '+High',
@@ -558,7 +558,7 @@ if predict_button:
                 'Facebook': '+Low',
                 'LinkedIn': '+Medium'
             }
-            factors_impact.append((f"ðŸ“± {platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
+            factors_impact.append((f"{platform}", f"Platform impact", platform_impact.get(platform, '+Medium')))
             
             # Display factors
             for factor_name, description, impact in factors_impact[:5]:
@@ -575,23 +575,23 @@ if predict_button:
             st.markdown("---")
             
             # RECOMMENDATIONS
-            st.markdown("### ðŸ’¡ Recommendations")
+            st.markdown("### Recommendations")
             
             recommendations = []
             if sentiment_score < 0.3:
-                recommendations.append("ðŸŽ¯ Increase positive sentiment in post content")
+                recommendations.append("Increase positive sentiment in post content")
             if toxicity_score > 0.3:
-                recommendations.append("ðŸ›¡ï¸ Review content for potentially offensive language")
+                recommendations.append("Review content for potentially offensive language")
             if platform == 'Facebook':
-                recommendations.append("ðŸ“± Consider cross-posting to Instagram/TikTok for better reach")
+                recommendations.append("Consider cross-posting to Instagram/TikTok for better reach")
             if buzz_change_rate < 0:
-                recommendations.append("ðŸ”¥ Post about trending topics for higher visibility")
+                recommendations.append("Post about trending topics for higher visibility")
             if user_engagement_growth < 5:
-                recommendations.append("ðŸ“Š Build user base and engagement history")
+                recommendations.append("Build user base and engagement history")
             
             if not recommendations:
-                recommendations.append("âœ¨ Content looks great! Consider consistent posting schedule")
-                recommendations.append("ðŸ“ˆ Monitor engagement trends to optimize further")
+                recommendations.append("Content looks great! Consider consistent posting schedule")
+                recommendations.append("Monitor engagement trends to optimize further")
             
             for i, rec in enumerate(recommendations[:4], 1):
                 st.markdown(f"{i}. {rec}")
@@ -599,7 +599,7 @@ if predict_button:
             st.markdown("---")
             
             # MODEL CONFIDENCE
-            st.markdown("### ðŸŽ“ Model Confidence")
+            st.markdown("### Model Confidence")
             
             # Calculate confidence based on input variance
             all_inputs = [sentiment_score, toxicity_score, user_engagement_growth, buzz_change_rate]
@@ -611,11 +611,11 @@ if predict_button:
             st.progress(confidence)
             
             if confidence > 0.8:
-                st.success("âœ… High confidence prediction")
+                st.success("High confidence prediction")
             elif confidence > 0.6:
-                st.info("â„¹ï¸ Medium confidence - results may vary")
+                st.info("Medium confidence - results may vary")
             else:
-                st.warning("âš ï¸ Lower confidence - gather more data")
+                st.warning("Lower confidence - gather more data")
             
             st.markdown("---")
             
@@ -625,7 +625,7 @@ if predict_button:
                     pred_explainer = PredictionExplainer()
                     explanation = pred_explainer.explain_engagement_prediction(prediction, input_data)
                     
-                    with st.expander("ðŸ“Š Advanced Analysis", expanded=False):
+                    with st.expander("Advanced Analysis", expanded=False):
                         st.markdown(explanation['interpretation'])
                         
                         if explanation['recommendations']:
@@ -638,7 +638,7 @@ if predict_button:
             
             # Previous predictions
             st.markdown("---")
-            st.markdown("### ðŸ“Š Session Stats")
+            st.markdown("### Session Stats")
             total_preds = get_total_predictions()
             col_s1, col_s2, col_s3 = st.columns(3)
             with col_s1:
@@ -646,15 +646,15 @@ if predict_button:
             with col_s2:
                 st.metric("Avg Engagement", f"{prediction:.2%}")
             with col_s3:
-                st.metric("Status", "âœ… Active")
+                st.metric("Status", "Active")
 
     except Exception as e:
-        st.error(f"âŒ Prediction error: {e}")
+        st.error(f"Prediction error: {e}")
         logger.error(f"Prediction error: {e}", exc_info=True)
 
 # Footer
 st.markdown("---")
-st.markdown("### ðŸ’¡ Tips for Better Engagement")
+st.markdown("### Tips for Better Engagement")
 st.markdown("""
 - **Positive sentiment** generally leads to higher engagement
 - **Low toxicity** is crucial for good engagement
@@ -664,7 +664,7 @@ st.markdown("""
 
 # Monitoring & Analytics Section
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ðŸ“Š Monitoring & Analytics")
+st.sidebar.markdown("### Monitoring & Analytics")
 
 # Session metrics - Load from database
 if 'start_time' not in st.session_state:
@@ -679,23 +679,23 @@ uptime_minutes = uptime.seconds // 60
 
 col1, col2 = st.sidebar.columns(2)
 with col1:
-    st.metric("ðŸŽ¯ Predictions", total_predictions, help="Total predictions made (persists across refreshes)")
+    st.metric("Predictions", total_predictions, help="Total predictions made (persists across refreshes")
 with col2:
-    st.metric("â±ï¸ Uptime", f"{uptime_minutes} min", help="Current session uptime")
+    st.metric("Uptime", f"{uptime_minutes} min", help="Current session uptime")
 
-st.sidebar.metric("ðŸ¤– Model Status", "âœ… Active", help="Model is loaded and ready")
+st.sidebar.metric("Model Status", "Active", help="Model is loaded and ready")
 
 # Security and Streaming Status
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ðŸ” Security & Streaming")
+st.sidebar.markdown("### Security & Streaming")
 
 if SECURITY_ENABLED:
     if key_vault and key_vault.client:
-        st.sidebar.success("ðŸ” Key Vault: Connected")
+        st.sidebar.success("Key Vault: Connected")
     else:
-        st.sidebar.info("ðŸ” Key Vault: Fallback mode (using .env)")
+        st.sidebar.info("Key Vault: Fallback mode (using .env)")
 else:
-    st.sidebar.info("ðŸ” Security: Using environment variables")
+    st.sidebar.info("Security: Using environment variables")
 
 # Add a progress indicator
 if total_predictions > 0:
@@ -707,9 +707,9 @@ logger.info(f"Session metrics - Total Predictions: {total_predictions}, Uptime: 
 
 # Footer in sidebar
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ðŸŽ“ Academic Project")
+st.sidebar.markdown("### Academic Project")
 st.sidebar.caption("Cloud Computing Course")
 st.sidebar.caption("Machine Learning Pipeline")
-st.sidebar.caption("Â© 2025")
+st.sidebar.caption("© 2025")
 
 
