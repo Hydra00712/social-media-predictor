@@ -41,7 +41,7 @@ mlflow.db
 # Azure Functions
 local.settings.json
 .python_packages/
-.vscode/
+
 __blobstorage__/
 __queuestorage__/
 __azurite_db*__.json
